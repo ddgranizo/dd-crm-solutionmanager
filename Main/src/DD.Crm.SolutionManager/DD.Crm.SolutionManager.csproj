@@ -90,7 +90,6 @@
     <Compile Include="SolutionManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\CrmProvider.cs" />
-    <Compile Include="Utilities\EntitiyUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

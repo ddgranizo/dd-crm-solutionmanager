@@ -10,6 +10,32 @@ namespace DD.Crm.SolutionManager.Extensions
 {
     public static class EntityExtensions
     {
+
+        public static SolutionComponentBase ToSolutionComponent(this Entity e)
+        {
+            if (e.LogicalName != SolutionComponentBase.EntityLogicalName)
+            {
+                throw new InvalidCastException();
+            }
+            SolutionComponentBase s = new SolutionComponentBase();
+            s.Id = e.GetParameter<Guid>(SolutionComponentBase.AttributeDefinitions.Id);
+            s.CreatedBy = e.GetParameter<EntityReference>(SolutionComponentBase.AttributeDefinitions.CreatedBy);
+            s.CreatedOn = e.GetParameter<DateTime>(SolutionComponentBase.AttributeDefinitions.CreatedOn);
+            s.IsMetadata = e.GetParameter<bool>(SolutionComponentBase.AttributeDefinitions.IsMetadata);
+            s.ModifiedBy = e.GetParameter<EntityReference>(SolutionComponentBase.AttributeDefinitions.ModifiedBy);
+            s.ModifiedOn = e.GetParameter<DateTime>(SolutionComponentBase.AttributeDefinitions.ModifiedOn);
+            s.ObjectId = e.GetParameter<Guid>(SolutionComponentBase.AttributeDefinitions.ObjectId);
+            s.RootSolutionComponentId = e.GetParameter<Guid>(SolutionComponentBase.AttributeDefinitions.RootSolutionComponentId);
+            s.SolutionId = e.GetParameter<EntityReference>(SolutionComponentBase.AttributeDefinitions.SolutionId);
+            s.Type = (SolutionComponentBase.SolutionComponentType)e.GetParameter<OptionSetValue>(SolutionComponentBase.AttributeDefinitions.Type).Value;
+            if (e.Attributes.Contains(SolutionComponentBase.AttributeDefinitions.RootComponentBehavior))
+            {
+                s.RootComponentBehavior = (SolutionComponentBase.RootComponentBehaviorType)e.GetParameter<OptionSetValue>(SolutionComponentBase.AttributeDefinitions.RootComponentBehavior).Value;
+            }
+            return s;
+        }
+
+
         public static Solution ToSolution(this Entity e)
         {
             if (e.LogicalName != Solution.EntityLogicalName)

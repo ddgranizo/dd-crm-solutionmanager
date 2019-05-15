@@ -96,6 +96,11 @@
     <None Include="packages.config" />
     <EmbeddedResource Include="secrets.json" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\DD.Crm.SolutionManager\DD.Crm.SolutionManager.csproj">
+      <Project>{6202C2CD-20A0-4140-9674-35EBD030A6E0}</Project>
+      <Name>DD.Crm.SolutionManager</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

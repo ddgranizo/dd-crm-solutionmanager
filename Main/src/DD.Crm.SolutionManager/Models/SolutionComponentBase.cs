@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xrm.Sdk;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,27 @@ namespace DD.Crm.SolutionManager.Models
 {
     public class SolutionComponentBase
     {
+
+        public const string EntityLogicalName = "solutioncomponent";
+
+        public struct AttributeDefinitions
+        {
+            public const string Id = "solutioncomponentid";
+
+            public const string Type = "componenttype";
+            public const string SolutionId = "solutionid";
+            public const string ModifiedBy = "modifiedby";
+            public const string ObjectId = "objectid";
+            public const string RootSolutionComponentId = "rootsolutioncomponentid";
+            public const string ModifiedOn = "modifiedon";
+            public const string CreatedOn = "createdon";
+            public const string CreatedBy = "createdby";
+            public const string IsMetadata = "ismetadata";
+            public const string RootComponentBehavior = "rootcomponentbehavior";
+        }
+
+
+
         public enum RootComponentBehaviorType
         {
             IncludeSubComponents = 0,
@@ -42,23 +64,23 @@ namespace DD.Crm.SolutionManager.Models
         }
 
         public SolutionComponentType Type { get; set; }
-        public Guid ModifiedBy { get; set; }
+        public EntityReference ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
-        public Guid SolutionComponentId { get; set; }
+        public Guid Id { get; set; }
         public DateTime CreatedOn { get; set; }
-        public RootComponentBehaviorType RootComponentBehavior { get; set; }
+        public RootComponentBehaviorType? RootComponentBehavior { get; set; }
         public bool IsMetadata { get; set; }
         public Guid ObjectId { get; set; }
-        public Guid SolutionId { get; set; }
+        public EntityReference SolutionId { get; set; }
         public Guid RootSolutionComponentId { get; set; }
-        public Guid CreatedBy { get; set; }
+        public EntityReference CreatedBy { get; set; }
 
         public SolutionComponentBase()
         {
 
         }
 
-        
-       
+
+
     }
 }

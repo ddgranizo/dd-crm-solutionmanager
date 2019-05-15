@@ -27,8 +27,18 @@ namespace DD.Crm.SolutionManager.Utilities
         }
 
 
-
-
+        public static List<SolutionComponentBase> GetSolutionComponents(IOrganizationService service, Guid solutionId)
+        {
+            QueryExpression qe = new QueryExpression(SolutionComponentBase.EntityLogicalName);
+            FilterExpression fe = new FilterExpression();
+            fe.AddCondition(SolutionComponentBase.AttributeDefinitions.SolutionId, ConditionOperator.Equal, solutionId);
+            qe.Criteria = fe;
+            qe.ColumnSet = new ColumnSet(true);
+            return service.RetrieveMultiple(qe)
+                     .Entities
+                     .Select(k => { return k.ToSolutionComponent(); })
+                     .ToList();
+        }
 
 
         public static IOrganizationService GetService(string stringConnection)
@@ -39,5 +49,6 @@ namespace DD.Crm.SolutionManager.Utilities
                                                         (IOrganizationService)crmService.OrganizationServiceProxy;
             return serviceProxy;
         }
+
     }
 }

@@ -1,4 +1,5 @@
-﻿using Executer.Utilities;
+﻿using DD.Crm.SolutionManager;
+using Executer.Utilities;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
@@ -17,8 +18,11 @@ namespace Executer
             var password = SecretManager.GetSecret("password", "YourPasswordHere");
             var endpoint = ConfigManager.GetAppConfig("crmLab");
             var strConnection = string.Format(endpoint, userName, password);
-            IOrganizationService service = GetService(strConnection);
 
+            SolutionManager sol = new SolutionManager(strConnection);
+            var solutions = sol.GetSolutions();
+            var solutionAtc = solutions.FirstOrDefault(k => k.DisplayName.StartsWith("3."));
+            sol.GetSolutionComponents(solutionAtc.Id);
         }
 
 
