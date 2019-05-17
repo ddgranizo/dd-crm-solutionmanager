@@ -1,13 +1,13 @@
 ﻿using SolutionManagerUI.Commands;
 using SolutionManagerUI.Models;
+using SolutionManagerUI.Providers;
+using SolutionManagerUI.Utilities;
 using SolutionManagerUI.Utilities.Threads;
 using SolutionManagerUI.ViewModels.Base;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 
@@ -44,6 +44,32 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+
+        private CrmConnection _selectedCrmConnection = null;
+        public CrmConnection SelectedCrmConnection
+        {
+            get
+            {
+                return _selectedCrmConnection;
+            }
+            set
+            {
+                _selectedCrmConnection = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedCrmConnection"));
+                RaiseCanExecuteChanged();
+
+                if (_selectedCrmConnection != null)
+                {
+                    IsEditCommandPanelVisible = true;
+                    Username = _selectedCrmConnection.Username;
+                    Name = _selectedCrmConnection.Name;
+                    Url = _selectedCrmConnection.Endpoint;
+                }
+
+            }
+        }
+
+
         private int _errorTasks = 0;
         public int ErrorTasks
         {
@@ -74,6 +100,21 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+        private string _name = null;
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+            set
+            {
+                _name = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Name"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
         private string _Username = null;
         public string Username
         {
@@ -85,6 +126,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _Username = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Username"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -99,6 +141,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _Url = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Url"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -114,6 +157,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _Password = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Password"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -130,6 +174,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _newName = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewName"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -144,6 +189,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _newUsername = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewUsername"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -158,6 +204,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _newUrl = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewUrl"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -173,6 +220,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _newPassword = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewPassword"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -192,6 +240,51 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
+
+        private bool _isEditCommandPanelVisible = false;
+        public bool IsEditCommandPanelVisible
+        {
+            get
+            {
+                return _isEditCommandPanelVisible;
+            }
+            set
+            {
+                _isEditCommandPanelVisible = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsEditCommandPanelVisible"));
+            }
+        }
+
+
+
+        private string _messageDialog = null;
+        public string MessageDialog
+        {
+            get
+            {
+                return _messageDialog;
+            }
+            set
+            {
+                _messageDialog = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("MessageDialog"));
+            }
+        }
+
+        private bool _isDialogOpen = false;
+        public bool IsDialogOpen
+        {
+            get
+            {
+                return _isDialogOpen;
+            }
+            set
+            {
+                _isDialogOpen = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsDialogOpen"));
+            }
+        }
+
         public ConnectionManagerViewModel()
         {
             ThreadManager.Instance.OnStartedTask += Instance_OnStartedTask;
@@ -205,7 +298,6 @@ namespace SolutionManagerUI.ViewModels
             this._window = window;
             this.Connections = connections;
 
-
             RegisterCommands();
         }
 
@@ -214,8 +306,114 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("ConfirmNewConnectionCommand", ConfirmNewConnectionCommand);
             Commands.Add("RequestNewConnectionCommand", RequestNewConnectionCommand);
             Commands.Add("CancelRequestCommand", CancelRequestCommand);
-            
+            Commands.Add("RemoveConnectionCommand", RemoveConnectionCommand);
+            Commands.Add("ConfirmEditConnectionCommand", ConfirmEditConnectionCommand);
+            Commands.Add("TestConnectionCommand", TestConnectionCommand);
+
         }
+
+
+        private Guid _testConnectionId = Guid.NewGuid();
+
+
+        private bool _isTestingConnection = false;
+        public bool IsTestingConnection
+        {
+            get
+            {
+                return _isTestingConnection;
+            }
+            set
+            {
+                _isTestingConnection = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsTestingConnection"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+        private ICommand _testConnectionCommand = null;
+        public ICommand TestConnectionCommand
+        {
+            get
+            {
+                if (_testConnectionCommand == null)
+                {
+                    _testConnectionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var stringConnection
+                                = string.Format(@"ServiceUri={0}; Username={1}; Password={2}; authtype=Office365; RequireNewInstance=True;",
+                                    SelectedCrmConnection.Endpoint,
+                                    SelectedCrmConnection.Username,
+                                    Crypto.Decrypt(SelectedCrmConnection.Password));
+
+                            IsTestingConnection = true;
+                            SetDialog("Testing connection...");
+                            ThreadManager.Instance.ScheduleTask(() =>
+                            {
+                                var service = CrmDataProvider.GetService(stringConnection);
+                                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    IsTestingConnection = false;
+                                    string message = service != null
+                                        ? "Connection OK!"
+                                        : "Cannot connect to the environment with this configuration";
+                                    UpdateDialogMessage(message, 2000);
+                                });
+                            }, "Validating connection...", _testConnectionId);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedCrmConnection != null
+                            && !IsTestingConnection;
+                    });
+                }
+                return _testConnectionCommand;
+            }
+        }
+
+        private ICommand _removeConnectionCommand = null;
+        public ICommand RemoveConnectionCommand
+        {
+            get
+            {
+                if (_removeConnectionCommand == null)
+                {
+                    _removeConnectionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            if (SelectedCrmConnection != null)
+                            {
+                                var _connections = Connections;
+                                var index = _connections.IndexOf(SelectedCrmConnection);
+                                _connections.RemoveAt(index);
+                                ReloadConnections();
+
+                                SelectedCrmConnection = null;
+                                IsEditCommandPanelVisible = false;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedCrmConnection != null
+                            && !IsTestingConnection;
+                    });
+                }
+                return _removeConnectionCommand;
+            }
+        }
+
+
 
         private ICommand _requestNewConnectionCommand = null;
         public ICommand RequestNewConnectionCommand
@@ -236,12 +434,11 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return true;
+                        return !IsTestingConnection;
                     });
                 }
                 return _requestNewConnectionCommand;
             }
-
         }
 
         private ICommand _cancelRequestCommand = null;
@@ -255,7 +452,9 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
+                            SelectedCrmConnection = null;
                             IsNewCommandPanelVisible = false;
+                            IsEditCommandPanelVisible = false;
                         }
                         catch (Exception ex)
                         {
@@ -263,12 +462,55 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return true;
+                        return  !IsTestingConnection;
                     });
                 }
                 return _cancelRequestCommand;
             }
         }
+
+
+        private ICommand _confirmEditConnectionCommand = null;
+        public ICommand ConfirmEditConnectionCommand
+        {
+            get
+            {
+                if (_confirmEditConnectionCommand == null)
+                {
+                    _confirmEditConnectionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+
+
+                            SelectedCrmConnection.Endpoint = Url;
+                            SelectedCrmConnection.Name = Name;
+                            SelectedCrmConnection.Username = Username;
+                            if (!string.IsNullOrEmpty(Password))
+                            {
+                                SelectedCrmConnection.Password = Crypto.Encrypt(Password);
+                            }
+                            SelectedCrmConnection = null;
+                            IsEditCommandPanelVisible = false;
+                            ReloadConnections();
+
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return !string.IsNullOrEmpty(Name)
+                            && !string.IsNullOrEmpty(Username)
+                            && !string.IsNullOrEmpty(Url)
+                            && !IsTestingConnection;
+                    });
+                }
+                return _confirmEditConnectionCommand;
+            }
+        }
+
 
         private ICommand _confirmNewConnectionCommand = null;
         public ICommand ConfirmNewConnectionCommand
@@ -282,7 +524,13 @@ namespace SolutionManagerUI.ViewModels
                         try
                         {
                             var connections = Connections;
-                            connections.Add(new CrmConnection() { Endpoint = NewUrl, Password = NewPassword, Name = NewName, Username = NewUsername });
+                            connections.Add(new CrmConnection()
+                            {
+                                Endpoint = NewUrl,
+                                Password = Crypto.Encrypt(NewPassword),
+                                Name = NewName,
+                                Username = NewUsername
+                            });
                             Connections = connections;
                             IsNewCommandPanelVisible = false;
                         }
@@ -292,13 +540,45 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return true;
+                        return !string.IsNullOrEmpty(NewName)
+                            && !string.IsNullOrEmpty(NewUsername)
+                            && !string.IsNullOrEmpty(NewPassword)
+                            && !string.IsNullOrEmpty(NewUrl)
+                            && !IsTestingConnection;
                     });
                 }
                 return _confirmNewConnectionCommand;
             }
         }
 
+        private void SetDialog(string message)
+        {
+            IsDialogOpen = true;
+            this.MessageDialog = message;
+        }
+
+        private void UpdateDialogMessage(string message, int unsetInMs = 0)
+        {
+            this.MessageDialog = message;
+            if (unsetInMs > 0)
+            {
+                var timer = new System.Timers.Timer(unsetInMs);
+                timer.Elapsed += (sender, e) => { UnsetDialog(); timer.Stop(); };
+                timer.Start();
+            }
+        }
+
+        private void UnsetDialog()
+        {
+            IsDialogOpen = false;
+        }
+
+
+        private void ReloadConnections()
+        {
+            var connections = Connections;
+            Connections = _connections;
+        }
 
 
         private void Instance_OnErrorTask(object sender, Events.ThreadManagerScheduledTaskEventArgs args)

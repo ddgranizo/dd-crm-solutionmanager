@@ -37,6 +37,18 @@
                 <RowDefinition Height="20"/>
             </Grid.RowDefinitions>
 
+            <materialDesign:DialogHost IsOpen="{Binding IsDialogOpen}" Grid.RowSpan="2">
+                <materialDesign:DialogHost.DialogContent>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="1" Text="{Binding MessageDialog}" />
+                    </Grid>
+                </materialDesign:DialogHost.DialogContent>
+            </materialDesign:DialogHost>
+
             <Grid Grid.Row="1" >
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition  Width="53*"/>
@@ -49,15 +61,27 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="5">
                         <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Add new connection" Command="{Binding Source={StaticResource viewModel}, Path=RequestNewConnectionCommand, Mode=OneWay}" CommandParameter="{Binding}">
                             <materialDesign:PackIcon Kind="Add" Width="15" Height="15"/>
                         </Button>
-                        <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Remove selected connection" Command="{Binding Source={StaticResource viewModel}, Path=CheckSolutionDependenciesCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                        <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Remove selected connection" Command="{Binding Source={StaticResource viewModel}, Path=RemoveConnectionCommand, Mode=OneWay}" CommandParameter="{Binding}">
                             <materialDesign:PackIcon Kind="Delete" Width="15" Height="15"/>
                         </Button>
+                        <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Remove selected connection" Command="{Binding Source={StaticResource viewModel}, Path=TestConnectionCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                            <materialDesign:PackIcon Kind="LanConnect" Width="15" Height="15"/>
+                        </Button>
                     </StackPanel>
-                    <ListView Grid.Row="1" ItemsSource="{Binding ConnectionsCollection}"></ListView>
+                    <ListView Grid.Row="1" Margin="7" ItemsSource="{Binding ConnectionsCollection}" SelectedValue="{Binding SelectedCrmConnection}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <TextBlock Text="{Binding Name}"></TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
                 </Grid>
 
 
@@ -80,26 +104,68 @@
                             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0">Name</Label>
                             <TextBox VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
 
-                            
+
                             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="1">URL</Label>
                             <TextBox VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding NewUrl, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
-                            
+
                             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="2">Username</Label>
                             <TextBox VerticalAlignment="Center" Grid.Row="2" Grid.Column="1" Text="{Binding NewUsername, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
-                            
+
                             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="3">Password</Label>
-                            <PasswordBox x:Name="txtPassword" Grid.Row="3" Grid.Column="1"  VerticalAlignment="Center" PasswordChanged="TxtPassword_PasswordChanged"></PasswordBox>
+                            <PasswordBox x:Name="txtNewPassword" Grid.Row="3" Grid.Column="1"  VerticalAlignment="Center" PasswordChanged="TxtNewPassword_PasswordChanged"></PasswordBox>
 
 
-                            <StackPanel Grid.Row="" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <StackPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
                                 <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new connection" Command="{Binding Source={StaticResource viewModel}, Path=CancelRequestCommand, Mode=OneWay}" CommandParameter="{Binding}">
-                                <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
+                                    <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
                                 </Button>
                                 <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new connection" Command="{Binding Source={StaticResource viewModel}, Path=ConfirmNewConnectionCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="ContentSave" Width="15" Height="15"/>
                                 </Button>
                             </StackPanel>
-                            
+
+                        </Grid>
+                    </GroupBox>
+
+
+                    <GroupBox Header="Edit connection" Visibility="{Binding IsEditCommandPanelVisible, Converter={StaticResource BoolToCollapseConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions >
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0">Name</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="1">URL</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding Url, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="2">Username</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="2" Grid.Column="1" Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="3">Password</Label>
+                            <PasswordBox x:Name="txtEditPassword" Grid.Row="3" Grid.Column="1"  VerticalAlignment="Center" PasswordChanged="TxtEditPassword_PasswordChanged"></PasswordBox>
+
+
+                            <StackPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new connection" Command="{Binding Source={StaticResource viewModel}, Path=CancelRequestCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
+                                </Button>
+                                <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new connection" Command="{Binding Source={StaticResource viewModel}, Path=ConfirmEditConnectionCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="15" Height="15"/>
+                                </Button>
+                            </StackPanel>
+
                         </Grid>
                     </GroupBox>
                 </Grid>

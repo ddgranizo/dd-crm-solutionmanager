@@ -29,9 +29,14 @@ namespace SolutionManagerUI.Views
             _viewModel.Initialize(this, connections);
         }
 
-        private void TxtPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        private void TxtNewPassword_PasswordChanged(object sender, RoutedEventArgs e)
         {
-            _viewModel.NewPassword = txtPassword.Password;
+            _viewModel.NewPassword = txtNewPassword.Password;
+        }
+
+        private void TxtEditPassword_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            _viewModel.Password = txtEditPassword.Password;
         }
     }
 }
