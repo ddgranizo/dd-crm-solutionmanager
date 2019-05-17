@@ -1,4 +1,5 @@
 ﻿using DD.Crm.SolutionManager.Models;
+using DD.Crm.SolutionManager.Models.Data;
 using Microsoft.Xrm.Sdk;
 using System;
 using System.Collections.Generic;
@@ -10,6 +11,105 @@ namespace DD.Crm.SolutionManager.Extensions
 {
     public static class EntityExtensions
     {
+
+        public static AppData ToAppData(this Entity e)
+        {
+            return GetGenericData<AppData>(e);
+        }
+
+        public static ChartData ToChartData(this Entity e)
+        {
+            return GetGenericData<ChartData>(e);
+        }
+
+        public static ConnectionRoleData ToConnectionRoleData(this Entity e)
+        {
+            return GetGenericData<ConnectionRoleData>(e);
+        }
+
+        public static ConvertRuleData ToConvertRuleData(this Entity e)
+        {
+            return GetGenericData<ConvertRuleData>(e);
+        }
+
+        public static EmailTemplateData ToEmailTemplateData(this Entity e)
+        {
+            return GetGenericData<EmailTemplateData>(e);
+        }
+
+        public static FormData ToFormData(this Entity e)
+        {
+            return GetGenericData<FormData>(e);
+        }
+
+        public static HierarchyRuleData ToHierarchyRuleData(this Entity e)
+        {
+            return GetGenericData<HierarchyRuleData>(e);
+        }
+
+
+        public static PluginAssemblyData ToPluginAssemblyData(this Entity e)
+        {
+            return GetGenericData<PluginAssemblyData>(e);
+        }
+
+        public static PluginStepData ToPluginStepData(this Entity e)
+        {
+            return GetGenericData<PluginStepData>(e);
+        }
+
+        public static RibbonData ToRibbonData(this Entity e)
+        {
+            return GetGenericData<RibbonData>(e);
+        }
+
+        public static RoleData ToRoleData(this Entity e)
+        {
+            return GetGenericData<RoleData>(e);
+        }
+
+        public static RolePrivilegeData ToRolePrivilegeData(this Entity e)
+        {
+            return GetGenericData<RolePrivilegeData>(e);
+        }
+
+        public static RoutingRuleData ToRoutingRuleData(this Entity e)
+        {
+            return GetGenericData<RoutingRuleData>(e);
+        }
+
+        public static SiteMapData ToSiteMap(this Entity e)
+        {
+            return GetGenericData<SiteMapData>(e);
+        }
+
+        public static ViewData ToViewData(this Entity e)
+        {
+            return GetGenericData<ViewData>(e);
+        }
+
+        public static WebResourceData ToWebResourceData(this Entity e)
+        {
+            return GetGenericData<WebResourceData>(e);
+        }
+
+        public static WorkflowData ToWorkflowData(this Entity e)
+        {
+            return GetGenericData<WorkflowData>(e);
+        }
+
+        public static T GetGenericData<T>(Entity e) where T : BaseEntity, new()
+        {
+            T a = new T();
+            a.Id = e.Id;
+            if (e.LogicalName != a.EntityLogicalName)
+            {
+                throw new InvalidCastException();
+            }
+            a.Name = null;
+            a.DisplayName = e.GetParameter<string>("name");
+            return a;
+        }
 
         public static SolutionComponentBase ToSolutionComponent(this Entity e)
         {

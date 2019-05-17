@@ -22,7 +22,10 @@ namespace Executer
             SolutionManager sol = new SolutionManager(strConnection);
             var solutions = sol.GetSolutions();
             var solutionAtc = solutions.FirstOrDefault(k => k.DisplayName.StartsWith("3."));
-            sol.GetSolutionComponents(solutionAtc.Id);
+            var items = sol.GetSolutionComponents(solutionAtc.Id, true);
+
+            var merged = sol.GetMergedSolutionComponents(items);
+
         }
 
 

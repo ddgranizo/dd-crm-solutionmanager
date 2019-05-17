@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,9 +61,11 @@ namespace DD.Crm.SolutionManager.Models
             PluginAssembly = 91,
             PluginStep = 92,
             RoutingRule = 150,
-            convertRule = 154,
+            ConvertRule = 154,
         }
 
+
+        public SolutionComponentBase ParentSolutionComponent { get; set; }
         public SolutionComponentType Type { get; set; }
         public EntityReference ModifiedBy { get; set; }
         public DateTime ModifiedOn { get; set; }
@@ -75,12 +78,102 @@ namespace DD.Crm.SolutionManager.Models
         public Guid RootSolutionComponentId { get; set; }
         public EntityReference CreatedBy { get; set; }
 
+
+
+        public object ObjectDefinition { get; set; }
+        public string DisplayName {
+            get
+            {
+                if (ObjectDefinition != null)
+                {
+                    return GetDisplayName();
+                }
+                return null;
+            }
+        }
+
+        public string LogicalName
+        {
+            get
+            {
+                if (ObjectDefinition != null)
+                {
+                    return GetLogicalName();
+                }
+                return null;
+            }
+        }
+
+
+        public int GetOrderWeight()
+        {
+            if (Type == SolutionComponentType.Entity)
+            {
+                if (RootComponentBehavior != null)
+                {
+                    if (RootComponentBehavior.Value == RootComponentBehaviorType.IncludeSubComponents)
+                    {
+                        return 1;
+                    }
+                    else if (RootComponentBehavior.Value == RootComponentBehaviorType.DoNotIncludeSubcomponents)
+                    {
+                        return 2;
+                    }
+                    else
+                    {
+                        return 3;
+                    }
+                }
+                else
+                {
+                    return 99;
+                }
+            }
+            else
+            {
+                return 100;
+            }
+        }
+
         public SolutionComponentBase()
         {
 
         }
 
 
+        private string GetDisplayName()
+        {
+            if (Type == SolutionComponentType.Entity)
+            {
+                return ((EntityMetadata)ObjectDefinition).DisplayName.UserLocalizedLabel.Label;
+            }
+            else if (Type == SolutionComponentType.Entity)
+            {
+                return ((AttributeMetadata)ObjectDefinition).DisplayName.UserLocalizedLabel.Label;
+            }
+            else if (Type == SolutionComponentType.Relationship)
+            {
+                return ((RelationshipMetadataBase)ObjectDefinition).SchemaName;
+            }
+            return null;
+        }
+
+        private string GetLogicalName()
+        {
+            if (Type == SolutionComponentType.Entity)
+            {
+                return ((EntityMetadata)ObjectDefinition).LogicalName;
+            }
+            else if (Type == SolutionComponentType.Entity)
+            {
+                return ((AttributeMetadata)ObjectDefinition).LogicalName;
+            }
+            else if (Type == SolutionComponentType.Relationship)
+            {
+                return ((RelationshipMetadataBase)ObjectDefinition).SchemaName;
+            }
+            return null;
+        }
 
     }
 }
