@@ -1,4 +1,5 @@
-﻿using SolutionManagerUI.Commands;
+﻿using Microsoft.Xrm.Sdk;
+using SolutionManagerUI.Commands;
 using SolutionManagerUI.Models;
 using SolutionManagerUI.Providers;
 using SolutionManagerUI.Utilities;
@@ -61,6 +62,7 @@ namespace SolutionManagerUI.ViewModels
                 if (_selectedCrmConnection != null)
                 {
                     IsEditCommandPanelVisible = true;
+                    IsNewCommandPanelVisible = false;
                     Username = _selectedCrmConnection.Username;
                     Name = _selectedCrmConnection.Name;
                     Url = _selectedCrmConnection.Endpoint;
@@ -352,14 +354,29 @@ namespace SolutionManagerUI.ViewModels
                             SetDialog("Testing connection...");
                             ThreadManager.Instance.ScheduleTask(() =>
                             {
-                                var service = CrmDataProvider.GetService(stringConnection);
+                                string okMessage = "Connection OK!";
+                                string koMessage = "Cannot connect to the environment with this configuration";
+
+                                IOrganizationService service = null;
+                                try
+                                {
+                                    service = CrmDataProvider.GetService(stringConnection);
+                                    
+                                }
+                                catch (Exception)
+                                {
+                                    //Avoid raising exception
+                                    UpdateDialogMessage(koMessage, 2000);
+                                }
+                               
                                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                                 {
                                     IsTestingConnection = false;
                                     string message = service != null
-                                        ? "Connection OK!"
-                                        : "Cannot connect to the environment with this configuration";
+                                        ? okMessage
+                                        : koMessage;
                                     UpdateDialogMessage(message, 2000);
+                                    
                                 });
                             }, "Validating connection...", _testConnectionId);
                         }
@@ -390,13 +407,18 @@ namespace SolutionManagerUI.ViewModels
                         {
                             if (SelectedCrmConnection != null)
                             {
-                                var _connections = Connections;
-                                var index = _connections.IndexOf(SelectedCrmConnection);
-                                _connections.RemoveAt(index);
-                                ReloadConnections();
+                                var response = MessageBox.Show("Confirm the delete? Cannot be undone", "Confirm", MessageBoxButton.OKCancel);
+                                if (response == MessageBoxResult.OK)
+                                {
+                                    var _connections = Connections;
+                                    var index = _connections.IndexOf(SelectedCrmConnection);
+                                    _connections.RemoveAt(index);
+                                    ReloadConnections();
 
-                                SelectedCrmConnection = null;
-                                IsEditCommandPanelVisible = false;
+                                    SelectedCrmConnection = null;
+                                    IsEditCommandPanelVisible = false;
+                                }
+                                
                             }
                         }
                         catch (Exception ex)
@@ -427,6 +449,9 @@ namespace SolutionManagerUI.ViewModels
                         try
                         {
                             IsNewCommandPanelVisible = true;
+                            IsEditCommandPanelVisible = false;
+                            SelectedCrmConnection = null;
+
                         }
                         catch (Exception ex)
                         {
@@ -455,6 +480,11 @@ namespace SolutionManagerUI.ViewModels
                             SelectedCrmConnection = null;
                             IsNewCommandPanelVisible = false;
                             IsEditCommandPanelVisible = false;
+
+                            NewName = null;
+                            NewUsername = null;
+                            NewUrl = null;
+                            NewPassword = null;
                         }
                         catch (Exception ex)
                         {

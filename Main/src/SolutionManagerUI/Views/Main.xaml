@@ -46,6 +46,7 @@
                     </MenuItem>
                     <MenuItem Header="Settings">
                         <MenuItem Header="Manage connections"  Command="{Binding Source={StaticResource viewModel}, Path=OpenConnectionsCommand, Mode=OneWay}" />
+                        <MenuItem Header="Manage settings"  Command="{Binding Source={StaticResource viewModel}, Path=OpenSettingsCommand, Mode=OneWay}" />
                     </MenuItem>
 
                 </Menu>

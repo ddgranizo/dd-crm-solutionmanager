@@ -1,0 +1,159 @@
+﻿<Window x:Class="SolutionManagerUI.Views.SettingManager"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        
+        xmlns:vm="clr-namespace:SolutionManagerUI.ViewModels"
+        xmlns:conv="clr-namespace:SolutionManagerUI.Converters" 
+        
+        
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal" 
+        TextOptions.TextRenderingMode="Auto"        
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        
+        Title="SettingManager" Height="450" Width="800">
+    <Grid x:Name="LayoutRoot"  Background="White" >
+        <Grid.Resources>
+            <vm:SettingManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:SettingManagerViewModel>
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
+
+        </Grid.Resources>
+        <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="20"/>
+            </Grid.RowDefinitions>
+
+            <materialDesign:DialogHost IsOpen="{Binding IsDialogOpen}" Grid.RowSpan="2">
+                <materialDesign:DialogHost.DialogContent>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="1" Text="{Binding MessageDialog}" />
+                    </Grid>
+                </materialDesign:DialogHost.DialogContent>
+            </materialDesign:DialogHost>
+
+            <Grid Grid.Row="1" >
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition  Width="53*"/>
+                    <ColumnDefinition  Width="5*"/>
+                    <ColumnDefinition Width="101*"/>
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Margin="0,0,0,0.5">
+                    <Grid.RowDefinitions >
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal" Margin="5">
+                        <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Add new Setting" Command="{Binding Source={StaticResource viewModel}, Path=RequestNewSettingCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                            <materialDesign:PackIcon Kind="Add" Width="15" Height="15"/>
+                        </Button>
+                        <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Remove selected Setting" Command="{Binding Source={StaticResource viewModel}, Path=RemoveSettingCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                            <materialDesign:PackIcon Kind="Delete" Width="15" Height="15"/>
+                        </Button>
+                        
+                    </StackPanel>
+                    <ListView Grid.Row="1" Margin="7" ItemsSource="{Binding SettingsCollection}" SelectedValue="{Binding SelectedSetting}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <TextBlock Text="{Binding Key}"></TextBlock>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                </Grid>
+
+
+                <Grid Grid.Column="2">
+                    <GroupBox Header="Add new Setting" Visibility="{Binding IsNewCommandPanelVisible, Converter={StaticResource BoolToCollapseConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions >
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0">Key</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding NewKey, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="1">Value</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding NewValue, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+                            
+
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new Setting" Command="{Binding Source={StaticResource viewModel}, Path=CancelRequestCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
+                                </Button>
+                                <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new Setting" Command="{Binding Source={StaticResource viewModel}, Path=ConfirmNewSettingCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="15" Height="15"/>
+                                </Button>
+                            </StackPanel>
+
+                        </Grid>
+                    </GroupBox>
+
+
+                    <GroupBox Header="Edit Setting" Visibility="{Binding IsEditCommandPanelVisible, Converter={StaticResource BoolToCollapseConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions >
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="auto"/>
+                            </Grid.RowDefinitions>
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="0">Key</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="0" Grid.Column="1" Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="1">Value</Label>
+                            <TextBox VerticalAlignment="Center" Grid.Row="1" Grid.Column="1" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" ></TextBox>
+
+                            
+
+                            <StackPanel Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                                <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new Setting" Command="{Binding Source={StaticResource viewModel}, Path=CancelRequestCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
+                                </Button>
+                                <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new Setting" Command="{Binding Source={StaticResource viewModel}, Path=ConfirmEditSettingCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="ContentSave" Width="15" Height="15"/>
+                                </Button>
+                            </StackPanel>
+
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</Window>

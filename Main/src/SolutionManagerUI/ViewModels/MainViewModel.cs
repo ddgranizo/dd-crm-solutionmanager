@@ -81,6 +81,36 @@ namespace SolutionManagerUI.ViewModels
         {
             Commands.Add("NewCommand", NewCommand);
             Commands.Add("OpenConnectionsCommand", OpenConnectionsCommand);
+            Commands.Add("OpenSettingsCommand", OpenSettingsCommand);
+        }
+
+
+        private ICommand _openSettingsCommand = null;
+        public ICommand OpenSettingsCommand
+        {
+            get
+            {
+                if (_openSettingsCommand == null)
+                {
+                    _openSettingsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            SettingManager manager = new SettingManager(Settings);
+                            manager.ShowDialog();
+                            AppDataManager.SaveSettings(Settings);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _openSettingsCommand;
+            }
         }
 
 

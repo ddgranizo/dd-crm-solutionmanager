@@ -122,6 +122,7 @@
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
+    <Compile Include="ViewModels\SettingManagerViewModel.cs" />
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="Views\ConnectionManager.xaml.cs">
@@ -134,11 +135,18 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Views\SettingManager.xaml.cs">
+      <DependentUpon>SettingManager.xaml</DependentUpon>
+    </Compile>
     <Page Include="Views\ConnectionManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Main.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\SettingManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
