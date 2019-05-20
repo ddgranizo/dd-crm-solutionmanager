@@ -344,11 +344,7 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            var stringConnection
-                                = string.Format(@"ServiceUri={0}; Username={1}; Password={2}; authtype=Office365; RequireNewInstance=True;",
-                                    SelectedCrmConnection.Endpoint,
-                                    SelectedCrmConnection.Username,
-                                    Crypto.Decrypt(SelectedCrmConnection.Password));
+                            var stringConnection = SelectedCrmConnection.GetStringConnetion();
 
                             IsTestingConnection = true;
                             SetDialog("Testing connection...");

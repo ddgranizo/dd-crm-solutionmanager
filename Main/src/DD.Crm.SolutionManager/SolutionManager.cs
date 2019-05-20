@@ -55,11 +55,15 @@ namespace DD.Crm.SolutionManager
             return list;
         }
 
-        public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<Guid> solutionIds)
+        public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<Guid> solutionIds, bool expandDefinition = false)
         {
-            return GetMergedSolutionComponents(GetSolutionsComponents(solutionIds));
+            return GetMergedSolutionComponents(GetSolutionsComponents(solutionIds, expandDefinition));
         }
 
+        public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<Solution> solutions, bool expandDefinition = false)
+        {
+            return GetMergedSolutionComponents(GetSolutionsComponents(solutions, expandDefinition));
+        }
 
 
         public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<SolutionComponentBase> components)
@@ -102,7 +106,7 @@ namespace DD.Crm.SolutionManager
             MergedInSolutionComponent sameObjectId =
                 mergedComponents.FirstOrDefault(k =>
                     k.ObjectId == component.ObjectId
-                    && component.RootComponentBehavior.Value > component.RootComponentBehavior.Value);
+                    && component.RootComponentBehavior.Value > k.RootComponentBehavior.Value);
             return sameObjectId;
         }
 
@@ -114,15 +118,34 @@ namespace DD.Crm.SolutionManager
                 && component.RootComponentBehavior != null)
             {
                 MergedInSolutionComponent sameObjectId =
-                mergedComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
+                    mergedComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
                 if (sameObjectId == null)
                 {
                     return true;
                 }
                 return component.RootComponentBehavior.Value < sameObjectId.RootComponentBehavior.Value;
             }
+            else if (component.IsChildComponent())
+            {
+                MergedInSolutionComponent sameObjectId =
+                    mergedComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
+                if (sameObjectId == null)
+                {
+                    var parentComponent =
+                        mergedComponents
+                            .FirstOrDefault(k => k.Id == component.ParentSolutionComponent?.Id);
+                    if (parentComponent != null)
+                    {
+                        return parentComponent.IsIn;
+                    }
+                    return true;
+                }
+            }
             return true;
         }
+
+
+
 
     }
 }

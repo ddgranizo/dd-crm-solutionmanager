@@ -19,5 +19,7 @@ namespace DD.Crm.SolutionManager.Models.Data
         public BaseEntity()
         {
         }
+
+        
     }
 }

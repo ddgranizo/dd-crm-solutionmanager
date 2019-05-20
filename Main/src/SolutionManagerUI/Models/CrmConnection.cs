@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SolutionManagerUI.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,6 +16,14 @@ namespace SolutionManagerUI.Models
         public CrmConnection()
         {
 
+        }
+
+        public string GetStringConnetion()
+        {
+            return string.Format(@"ServiceUri={0}; Username={1}; Password={2}; authtype=Office365; RequireNewInstance=True;",
+                                    Endpoint,
+                                    Username,
+                                    Crypto.Decrypt(Password));
         }
     }
 }

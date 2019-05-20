@@ -106,6 +106,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Commands\RelayCommand.cs" />
+    <Compile Include="Controls\SolutionComponent.xaml.cs">
+      <DependentUpon>SolutionComponent.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Converters\BoolToOpacy.cs" />
+    <Compile Include="Converters\ComponentBehaviorIncludeMetadataToVisibilityConverter.cs" />
+    <Compile Include="Converters\ComponentBehaviorIncludeAllToVisibilityConverter.cs" />
+    <Compile Include="Converters\IsComponentEntityToVisibilityConverter.cs" />
+    <Compile Include="Converters\ComponentTypeToBackgroundConverter.cs" />
     <Compile Include="Converters\BoolToCollapseConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Events\ThreadManagerScheduledTask.cs" />
@@ -125,6 +133,7 @@
     <Compile Include="ViewModels\SettingManagerViewModel.cs" />
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
+    <Compile Include="ViewModels\SolutionComponentViewModel.cs" />
     <Compile Include="Views\ConnectionManager.xaml.cs">
       <DependentUpon>ConnectionManager.xaml</DependentUpon>
     </Compile>
@@ -138,6 +147,10 @@
     <Compile Include="Views\SettingManager.xaml.cs">
       <DependentUpon>SettingManager.xaml</DependentUpon>
     </Compile>
+    <Page Include="Controls\SolutionComponent.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ConnectionManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -182,6 +195,12 @@
     <Folder Include="Extensions\" />
     <Folder Include="Interfaces\" />
     <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DD.Crm.SolutionManager\DD.Crm.SolutionManager.csproj">
+      <Project>{6202C2CD-20A0-4140-9674-35EBD030A6E0}</Project>
+      <Name>DD.Crm.SolutionManager</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

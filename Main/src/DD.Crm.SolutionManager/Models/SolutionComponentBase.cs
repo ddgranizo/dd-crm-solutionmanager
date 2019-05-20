@@ -1,4 +1,5 @@
-﻿using Microsoft.Xrm.Sdk;
+﻿using DD.Crm.SolutionManager.Models.Data;
+using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections.Generic;
@@ -65,6 +66,8 @@ namespace DD.Crm.SolutionManager.Models
         }
 
 
+
+
         public SolutionComponentBase ParentSolutionComponent { get; set; }
         public SolutionComponentType Type { get; set; }
         public EntityReference ModifiedBy { get; set; }
@@ -78,7 +81,7 @@ namespace DD.Crm.SolutionManager.Models
         public Guid RootSolutionComponentId { get; set; }
         public EntityReference CreatedBy { get; set; }
 
-
+        public string TypeString { get { return Type.ToString(); } }
 
         public object ObjectDefinition { get; set; }
         public string DisplayName {
@@ -131,8 +134,20 @@ namespace DD.Crm.SolutionManager.Models
             }
             else
             {
-                return 100;
+                return 100 + (int)Type;
             }
+        }
+
+
+        public bool IsChildComponent()
+        {
+            return Type == SolutionComponentType.Chart ||
+                    Type == SolutionComponentType.Form ||
+                     Type == SolutionComponentType.View ||
+                      Type == SolutionComponentType.Field ||
+                       Type == SolutionComponentType.EntityKey ||
+                        Type == SolutionComponentType.Relationship ||
+                         Type == SolutionComponentType.HierarchyRule;
         }
 
         public SolutionComponentBase()
@@ -147,7 +162,7 @@ namespace DD.Crm.SolutionManager.Models
             {
                 return ((EntityMetadata)ObjectDefinition).DisplayName.UserLocalizedLabel.Label;
             }
-            else if (Type == SolutionComponentType.Entity)
+            else if (Type == SolutionComponentType.Field)
             {
                 return ((AttributeMetadata)ObjectDefinition).DisplayName.UserLocalizedLabel.Label;
             }
@@ -155,7 +170,15 @@ namespace DD.Crm.SolutionManager.Models
             {
                 return ((RelationshipMetadataBase)ObjectDefinition).SchemaName;
             }
-            return null;
+            else if (Type == SolutionComponentType.OptionSet)
+            {
+                return ((OptionSetMetadata)ObjectDefinition).DisplayName.UserLocalizedLabel.Label;
+            }
+            else if (Type == SolutionComponentType.EntityKey)
+            {
+                return ((EntityKeyMetadata)ObjectDefinition).DisplayName.UserLocalizedLabel.Label;
+            }
+            else return ((BaseEntity)ObjectDefinition).DisplayName;
         }
 
         private string GetLogicalName()
@@ -164,7 +187,7 @@ namespace DD.Crm.SolutionManager.Models
             {
                 return ((EntityMetadata)ObjectDefinition).LogicalName;
             }
-            else if (Type == SolutionComponentType.Entity)
+            else if (Type == SolutionComponentType.Field)
             {
                 return ((AttributeMetadata)ObjectDefinition).LogicalName;
             }
@@ -172,8 +195,105 @@ namespace DD.Crm.SolutionManager.Models
             {
                 return ((RelationshipMetadataBase)ObjectDefinition).SchemaName;
             }
-            return null;
+            else if (Type == SolutionComponentType.OptionSet)
+            {
+                return ((OptionSetMetadata)ObjectDefinition).Name;
+            }
+            else if (Type == SolutionComponentType.EntityKey)
+            {
+                return ((EntityKeyMetadata)ObjectDefinition).LogicalName;
+            }
+            else return ((BaseEntity)ObjectDefinition).DisplayName;
         }
 
+
+        public static string GetTypeColor(SolutionComponentType type)
+        {
+            if (type == SolutionComponentType.Entity)
+            {
+                return "#BAE1FF";
+            }
+            else if (type == SolutionComponentType.Field)
+            {
+                return "#ceeaff";
+            }
+            else if (type == SolutionComponentType.Relationship)
+            {
+                return "#e3f3ff";
+            }
+            else if (type == SolutionComponentType.Form)
+            {
+                return "#94b4cc";
+            }
+            else if (type == SolutionComponentType.View)
+            {
+                return "#9ebbd1";
+            }
+            else if (type == SolutionComponentType.Ribbon)
+            {
+                return "#52abf0";
+            }
+            else if (type == SolutionComponentType.Role)
+            {
+                return "#ffffba";
+            }
+            else if (type == SolutionComponentType.ConnectionRole)
+            {
+                return "#e5e5a7";
+            }
+            else if (type == SolutionComponentType.Workflow)
+            {
+                return "#ffb3ba";
+            }
+            else if (type == SolutionComponentType.PluginAssembly)
+            {
+                return "#E5A1A7";
+            }
+            else if (type == SolutionComponentType.PluginStep)
+            {
+                return "#c78d92";
+            }
+            else if (type == SolutionComponentType.WebResource)
+            {
+                return "#baffc9";
+            }
+            else if (type == SolutionComponentType.App)
+            {
+                return "#CC94B4";
+            }
+            else if (type == SolutionComponentType.OptionSet)
+            {
+                return "#FFDDBA";
+            }
+            else if (type == SolutionComponentType.Sitemap)
+            {
+                return "#ffb76e";
+            }
+            else if (type == SolutionComponentType.ConvertRule)
+            {
+                return "#E1FFBA";
+            }
+            else if (type == SolutionComponentType.RoutingRule)
+            {
+                return "#cae5a7";
+            }
+            else if (type == SolutionComponentType.Chart)
+            {
+                return "#f767bb";
+            }
+            else if (type == SolutionComponentType.EntityKey)
+            {
+                return "#f748ae";
+            }
+            else if (type == SolutionComponentType.HierarchyRule)
+            {
+                return "#f82ba3";
+            }
+            else if (type == SolutionComponentType.EmailTemplate)
+            {
+                return "#33a3ee";
+            }
+            return "#FFFFFF";
+        }
     }
 }

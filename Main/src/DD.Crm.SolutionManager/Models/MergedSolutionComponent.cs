@@ -10,13 +10,15 @@ namespace DD.Crm.SolutionManager.Models
     {
         public bool IsIn { get; set; }
 
-        public SolutionComponentBase RemovedByComponent { get; set; }
-        public List<SolutionComponentBase> HasRemovedComponents { get; set; }
+        public MergedInSolutionComponent RemovedByComponent { get; set; }
+        public List<MergedInSolutionComponent> HasRemovedComponents { get; set; }
+        
+
 
         public MergedInSolutionComponent(SolutionComponentBase solutionComponentBase)
-            :base()
+            : base()
         {
-            HasRemovedComponents = new List<SolutionComponentBase>();
+            HasRemovedComponents = new List<MergedInSolutionComponent>();
             this.CreatedBy = solutionComponentBase.CreatedBy;
             this.CreatedOn = solutionComponentBase.CreatedOn;
             this.Id = solutionComponentBase.Id;

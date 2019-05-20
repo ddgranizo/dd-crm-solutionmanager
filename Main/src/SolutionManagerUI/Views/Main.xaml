@@ -10,7 +10,7 @@
         
         xmlns:vm="clr-namespace:SolutionManagerUI.ViewModels"
         xmlns:conv="clr-namespace:SolutionManagerUI.Converters" 
-        
+        xmlns:custom="clr-namespace:SolutionManagerUI.Controls"
         
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -22,21 +22,40 @@
         FontFamily="{DynamicResource MaterialDesignFont}"
         
         Title="SolutionManagerUI" Height="450" Width="800">
-    
+
+
+   
     <Grid x:Name="LayoutRoot"  Background="White" >
         <Grid.Resources>
             <vm:MainViewModel x:Key="viewModel" d:IsDataSource="True"></vm:MainViewModel>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
-        
+            <conv:ComponentTypeToBackgroundConverter x:Key="ComponentTypeToBackgroundConverter" />
+            <conv:BoolToOpacy x:Key="BoolToOpacy" />
+            <conv:ComponentBehaviorIncludeAllToVisibilityConverter x:Key="ComponentBehaviorIncludeAllToVisibilityConverter" />
+            <conv:ComponentBehaviorIncludeMetadataToVisibilityConverter x:Key="ComponentBehaviorIncludeMetadataToVisibilityConverter" />
+            <conv:IsComponentEntityToVisibilityConverter x:Key="IsComponentEntityToVisibilityConverter" />
         </Grid.Resources>
 
         <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
             <Grid.RowDefinitions>
                 <RowDefinition Height="auto"/>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="20"/>
+                <RowDefinition Height="40"/>
             </Grid.RowDefinitions>
+
+            <materialDesign:DialogHost IsOpen="{Binding IsDialogOpen}" Grid.RowSpan="3">
+                <materialDesign:DialogHost.DialogContent>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="1" Text="{Binding MessageDialog}" />
+                    </Grid>
+                </materialDesign:DialogHost.DialogContent>
+            </materialDesign:DialogHost>
+
 
             <DockPanel Grid.Row="0">
                 <Menu DockPanel.Dock="Top" Background="White">
@@ -48,10 +67,152 @@
                         <MenuItem Header="Manage connections"  Command="{Binding Source={StaticResource viewModel}, Path=OpenConnectionsCommand, Mode=OneWay}" />
                         <MenuItem Header="Manage settings"  Command="{Binding Source={StaticResource viewModel}, Path=OpenSettingsCommand, Mode=OneWay}" />
                     </MenuItem>
-
+                    <MenuItem Header="Solution component">
+                        <MenuItem Header="Find why is not in"  Command="{Binding Source={StaticResource viewModel}, Path=FindReasonWhyComponentIsNotInCommand, Mode=OneWay}" />
+                    </MenuItem>
                 </Menu>
             </DockPanel>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <Grid Grid.Column="0" Margin="5">
+                    <GroupBox Header="Solutions">
+                        <Grid Grid.Column="0" Margin="5">
+                            <Grid.RowDefinitions >
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
+                                </Button>
+                                <Button Grid.Column="1"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Open solution in browser" Command="{Binding Source={StaticResource viewModel}, Path=OpenSolutionInBrowserCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="OpenInBrowser" Width="15" Height="15"/>
+                                </Button>
+                                <Label Grid.Column="2" VerticalAlignment="Center">Filter:</Label>
+                                <TextBox Grid.Column="3" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                <Button Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Select solution(s)" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="ArrowCollapseRight" Width="15" Height="15"/>
+                                </Button>
+                            </Grid>
+                            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Horizontal" Margin="5">
+
+                            </StackPanel>
+
+                            <ScrollViewer  x:Name="SolutionsListScrollViewer" Grid.Row="2">
+                                <ListView x:Name="SolutionsList"  Margin="7" ItemsSource="{Binding FilteredSolutionsCollection}" PreviewMouseWheel="SolutionsList_PreviewMouseWheel" SelectionChanged="SolutionsList_SelectionChanged" SelectedItem="{Binding SelectedSolution}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="5">
+                                                <TextBlock Text="{Binding DisplayName}"></TextBlock>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </GroupBox>
+
+                </Grid>
+
+
+                <GridSplitter HorizontalAlignment="Right" 
+                  VerticalAlignment="Stretch" 
+                  Grid.Column="1" ResizeBehavior="PreviousAndNext"
+                  Width="10" Background="#FFBCBCBC"/>
+
+                <Grid Grid.Column="2" Margin="5">
+                    <GroupBox Header="{Binding SelectedSolutionsString, StringFormat='Solution components ({0})'}">
+                        <Grid Grid.Column="0" Margin="5">
+                            <Grid.RowDefinitions >
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                    <Label>Show merged</Label>
+                                    <ToggleButton IsChecked="{Binding ShowMerged}"></ToggleButton>
+                                </StackPanel>
+
+                                <!--<Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solution components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}">
+                                    <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
+                                </Button>-->
+
+                                <Label Grid.Column="1" VerticalAlignment="Center">Filter:</Label>
+                                <TextBox Grid.Column="2" VerticalAlignment="Center" Text="{Binding SolutionComponentFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                            </Grid>
+                            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Horizontal" Margin="5">
+                            
+                            </StackPanel>
+
+                            <ScrollViewer  x:Name="SolutionComponentsListScrollViewer" Grid.Row="2">
+                                <ListView x:Name="SolutionComponentsList"  Margin="7" ItemsSource="{Binding FilteredSolutionComponentsCollection}" SelectedItem="{Binding SelectedSolutionComponent}" PreviewMouseWheel="SolutionComponentsList_PreviewMouseWheel">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <custom:SolutionComponent Component="{Binding}"></custom:SolutionComponent>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </GroupBox>
+
+                </Grid>
+
+            </Grid>
+
+
+            <StatusBar Grid.Row="2">
+                <StatusBarItem>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Margin="10,0,10,0" VerticalAlignment="Center">Crm connection</TextBlock>
+                        <ComboBox SelectedItem="{Binding CurrentCrmConnection}" ItemsSource="{Binding ConnectionsCollection}" Width="200" Height="30" VerticalAlignment="Center">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}"></TextBlock>
+                                    </Grid>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Margin="5,0,5,0" Height="22"  Width="22" Style="{DynamicResource MaterialDesignFloatingActionLightButton}" ToolTip="Disconnect" Command="{Binding Source={StaticResource viewModel}, Path=DisconnectCommand, Mode=OneWay}">
+                            <materialDesign:PackIcon Kind="Remove" Width="15" Height="15"/>
+                        </Button>
+                    </StackPanel>
+
+
+                </StatusBarItem>
+            </StatusBar>
         </Grid>
-        
+
     </Grid>
 </Window>
