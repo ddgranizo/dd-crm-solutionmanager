@@ -12,6 +12,45 @@ namespace DD.Crm.SolutionManager.Extensions
     public static class EntityExtensions
     {
 
+        public static WorkSolution ToWorkSolution(this Entity e)
+        {
+            if (e.LogicalName != WorkSolution.EntityLogicalName)
+            {
+                throw new InvalidCastException();
+            }
+            WorkSolution s = new WorkSolution();
+            s.Id = e.GetParameter<Guid>(WorkSolution.AttributeDefinitions.Id);
+            s.CreatedOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.CreatedOn);
+            s.ModifiedOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.ModifiedOn);
+            s.Status = (WorkSolution.WorkSolutionStatus)
+                            e.GetParameter<OptionSetValue>(WorkSolution.AttributeDefinitions.Status).Value;
+            s.Name = e.GetParameter<string>(WorkSolution.AttributeDefinitions.Name);
+            s.Jira = e.GetParameter<string>(WorkSolution.AttributeDefinitions.Jira);
+            s.JiraUrl = e.GetParameter<string>(WorkSolution.AttributeDefinitions.JiraUrl);
+            s.SolutionUrl = e.GetParameter<string>(WorkSolution.AttributeDefinitions.SolutionUrl);
+            s.SolutionId = new Guid(e.GetParameter<string>(WorkSolution.AttributeDefinitions.SolutionId));
+            return s;
+
+
+        }
+        public static AggregatedSolution ToAgreatedSolution(this Entity e)
+        {
+            if (e.LogicalName != AggregatedSolution.EntityLogicalName)
+            {
+                throw new InvalidCastException();
+            }
+            AggregatedSolution s = new AggregatedSolution();
+            s.Id = e.GetParameter<Guid>(AggregatedSolution.AttributeDefinitions.Id);
+            s.CreatedOn = e.GetParameter<DateTime>(AggregatedSolution.AttributeDefinitions.CreatedOn);
+            s.ModifiedOn = e.GetParameter<DateTime>(AggregatedSolution.AttributeDefinitions.ModifiedOn);
+            s.Status = (AggregatedSolution.AggregatedSolutionStatus)
+                            e.GetParameter<OptionSetValue>(AggregatedSolution.AttributeDefinitions.Status).Value;
+            s.Name = e.GetParameter<string>(AggregatedSolution.AttributeDefinitions.Name);
+            s.Type = (AggregatedSolution.AggregatedSolutionType)
+                            e.GetParameter<OptionSetValue>(AggregatedSolution.AttributeDefinitions.Type).Value;
+            return s;
+        }
+
         public static AppData ToAppData(this Entity e)
         {
             return GetGenericData<AppData>(e);

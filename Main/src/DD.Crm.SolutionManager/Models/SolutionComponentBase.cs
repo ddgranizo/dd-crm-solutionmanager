@@ -84,7 +84,8 @@ namespace DD.Crm.SolutionManager.Models
         public string TypeString { get { return Type.ToString(); } }
 
         public object ObjectDefinition { get; set; }
-        public string DisplayName {
+        public string DisplayName
+        {
             get
             {
                 if (ObjectDefinition != null)
@@ -138,16 +139,18 @@ namespace DD.Crm.SolutionManager.Models
             }
         }
 
+        
+        public bool IsChild { get { return IsChildComponent(); } }
 
         public bool IsChildComponent()
         {
             return Type == SolutionComponentType.Chart ||
                     Type == SolutionComponentType.Form ||
-                     Type == SolutionComponentType.View ||
-                      Type == SolutionComponentType.Field ||
-                       Type == SolutionComponentType.EntityKey ||
-                        Type == SolutionComponentType.Relationship ||
-                         Type == SolutionComponentType.HierarchyRule;
+                    Type == SolutionComponentType.View ||
+                    Type == SolutionComponentType.Field ||
+                    Type == SolutionComponentType.EntityKey ||
+                    Type == SolutionComponentType.Relationship ||
+                    Type == SolutionComponentType.HierarchyRule;
         }
 
         public SolutionComponentBase()

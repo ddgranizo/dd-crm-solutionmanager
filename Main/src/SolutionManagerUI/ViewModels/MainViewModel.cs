@@ -22,7 +22,20 @@ namespace SolutionManagerUI.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
-
+        private bool _showInTree = false;
+        public bool ShowInTree
+        {
+            get
+            {
+                return _showInTree;
+            }
+            set
+            {
+                _showInTree = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("ShowInTree"));
+                FilterAndSetSolutionComponentsCollection();
+            }
+        }
 
         private bool _showMerged = false;
         public bool ShowMerged
@@ -87,19 +100,20 @@ namespace SolutionManagerUI.ViewModels
             if (SolutionComponents != null)
             {
                 var filteredSolutionComponents = SolutionComponents;
-                if (!string.IsNullOrEmpty(SolutionComponentFilter))
-                {
-                    filteredSolutionComponents =
-                        filteredSolutionComponents
-                        .Where(k => k.DisplayName.ToLowerInvariant().IndexOf(SolutionComponentFilter.ToLowerInvariant()) > -1)
-                        .ToList();
-                }
 
                 if (ShowMerged)
                 {
                     filteredSolutionComponents =
                         filteredSolutionComponents
                             .Where(k => k.IsIn)
+                                .ToList();
+                }
+
+                if (ShowInTree)
+                {
+                    filteredSolutionComponents =
+                        filteredSolutionComponents
+                            .Where(k => !k.IsChild)
                                 .ToList();
                 }
 
@@ -276,6 +290,8 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+        public ICommand OnLoadCommand { get; set; }
+
 
         private SolutionManager _currentSolutionManager = null;
         public SolutionManager CurrentSolutionManager
@@ -289,12 +305,12 @@ namespace SolutionManagerUI.ViewModels
                 _currentSolutionManager = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentSolutionManager"));
                 RaiseCanExecuteChanged();
-                if (CurrentSolutionManager != null)
+                if (CurrentSolutionManager != null && OnLoadCommand != null)
                 {
-                    ICommand reloadSolutionsCommand = ReloadSolutionsCommand;
-                    if (reloadSolutionsCommand.CanExecute(null))
+                    ICommand reloadSolutionsCommand = OnLoadCommand;
+                    if (OnLoadCommand.CanExecute(null))
                     {
-                        reloadSolutionsCommand.Execute(null);
+                        OnLoadCommand.Execute(null);
                     }
                 }
             }
@@ -494,6 +510,8 @@ namespace SolutionManagerUI.ViewModels
         public void Initialize(Window window)
         {
             RegisterCommands();
+
+            //OnLoadCommand = 
         }
 
 

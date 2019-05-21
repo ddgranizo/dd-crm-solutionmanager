@@ -66,5 +66,18 @@ namespace SolutionManagerUI.Views
             }
             _viewModel.RaisePropertyChanged();
         }
+
+        private void SolutionComponentsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            SolutionComponentsList.UpdateLayout();
+            if (e.AddedItems.Count == 1)
+            {
+                MergedInSolutionComponent item = e.AddedItems[0] as MergedInSolutionComponent;
+                var listViewItem = 
+                    SolutionComponentsList.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
+                listViewItem.Focus();
+            }
+
+        }
     }
 }

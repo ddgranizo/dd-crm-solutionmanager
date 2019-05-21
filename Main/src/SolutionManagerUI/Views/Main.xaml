@@ -156,6 +156,9 @@
                                 <StackPanel Grid.Row="0" Orientation="Horizontal">
                                     <Label>Show merged</Label>
                                     <ToggleButton IsChecked="{Binding ShowMerged}"></ToggleButton>
+
+                                    <!--<Label>Tree</Label>
+                                    <ToggleButton IsChecked="{Binding ShowInTree}"></ToggleButton>-->
                                 </StackPanel>
 
                                 <!--<Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solution components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}">
@@ -170,7 +173,12 @@
                             </StackPanel>
 
                             <ScrollViewer  x:Name="SolutionComponentsListScrollViewer" Grid.Row="2">
-                                <ListView x:Name="SolutionComponentsList"  Margin="7" ItemsSource="{Binding FilteredSolutionComponentsCollection}" SelectedItem="{Binding SelectedSolutionComponent}" PreviewMouseWheel="SolutionComponentsList_PreviewMouseWheel">
+                                <ListView x:Name="SolutionComponentsList"  
+                                          Margin="7" 
+                                          ItemsSource="{Binding FilteredSolutionComponentsCollection}" 
+                                          SelectedItem="{Binding SelectedSolutionComponent}" 
+                                          PreviewMouseWheel="SolutionComponentsList_PreviewMouseWheel"
+                                          SelectionChanged="SolutionComponentsList_SelectionChanged">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <custom:SolutionComponent Component="{Binding}"></custom:SolutionComponent>

@@ -28,6 +28,23 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
+
+
+        private bool _showInTree = false;
+        public bool ShowInTree
+        {
+            get
+            {
+                return _showInTree;
+            }
+            set
+            {
+                _showInTree = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("ShowInTree"));
+            }
+        }
+
+
         public SolutionComponentViewModel()
         {
         }

@@ -23,6 +23,29 @@ namespace SolutionManagerUI.Controls
     public partial class SolutionComponent : UserControl
     {
 
+
+        public bool ShowInTree
+        {
+            get
+            {
+                return (bool)GetValue(ShowInTreeDataProperty);
+            }
+            set
+            {
+                SetValue(ShowInTreeDataProperty, value);
+            }
+        }
+
+        public static readonly DependencyProperty ShowInTreeDataProperty =
+                     DependencyProperty.Register(
+                         "ShowInTree",
+                         typeof(bool),
+                         typeof(SolutionComponent), new FrameworkPropertyMetadata(new PropertyChangedCallback(OnValueChanged))
+                         {
+                             BindsTwoWayByDefault = true,
+                         });
+
+
         public MergedInSolutionComponent Component
         {
             get
@@ -54,7 +77,6 @@ namespace SolutionManagerUI.Controls
         }
 
 
-
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             SolutionComponent v = d as SolutionComponent;
@@ -62,11 +84,20 @@ namespace SolutionManagerUI.Controls
             {
                 v.SetSolutionComponent((MergedInSolutionComponent)e.NewValue);
             }
+            else if (e.Property.Name == "ShowInTree")
+            {
+                v.SetShowInTree((bool)e.NewValue);
+            }
         }
 
         private void SetSolutionComponent(MergedInSolutionComponent component)
         {
             _viewModel.Component = component;
+        }
+
+        private void SetShowInTree(bool showInTree)
+        {
+            _viewModel.ShowInTree = showInTree;
         }
     }
 }

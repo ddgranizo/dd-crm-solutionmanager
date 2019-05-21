@@ -17,7 +17,53 @@ namespace DD.Crm.SolutionManager.Utilities
     public static class CrmProvider
     {
 
-        public static Entity GetGenericData(IOrganizationService service, string entityLogicalName,  Guid objectId)
+        public static List<WorkSolution> GetAgregatedSolutions(IOrganizationService service, Guid agregatedSolutionId)
+        {
+            var qe = new QueryExpression()
+            {
+                EntityName = WorkSolution.EntityLogicalName,
+                ColumnSet = new ColumnSet(true),
+                LinkEntities =
+                        {
+                            new LinkEntity
+                            {
+                                LinkFromEntityName = WorkSolution.EntityLogicalName,
+                                LinkFromAttributeName = WorkSolution.AttributeDefinitions.Id,
+                                LinkToEntityName = "alm_workersolution_solutionaggregator",
+                                LinkToAttributeName = WorkSolution.AttributeDefinitions.Id,
+                                LinkCriteria = new FilterExpression
+                                {
+                                    FilterOperator = LogicalOperator.And,
+                                    Conditions =
+                                    {
+                                        new ConditionExpression
+                                        {
+                                            AttributeName = AggregatedSolution.AttributeDefinitions.Id,
+                                            Operator = ConditionOperator.Equal,
+                                            Values = { agregatedSolutionId }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+            };
+            return service.RetrieveMultiple(qe)
+                    .Entities
+                    .Select(k => { return k.ToWorkSolution(); })
+                    .ToList();
+        }
+
+        public static List<AggregatedSolution> GetAgregatedSolutions(IOrganizationService service)
+        {
+            QueryExpression qe = new QueryExpression(AggregatedSolution.EntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            return service.RetrieveMultiple(qe)
+                    .Entities
+                    .Select(k => { return k.ToAgreatedSolution(); })
+                    .ToList();
+        }
+
+        public static Entity GetGenericData(IOrganizationService service, string entityLogicalName, Guid objectId)
         {
             return service.Retrieve(entityLogicalName, objectId, new ColumnSet(true));
         }
@@ -122,7 +168,7 @@ namespace DD.Crm.SolutionManager.Utilities
             if (expandDefinition)
             {
                 items
-                    .OrderBy(k=>k.GetOrderWeight())
+                    .OrderBy(k => k.GetOrderWeight())
                     .ToList()
                     .ForEach(k => { k.ObjectDefinition = RetrieveObjectDefinition(service, k); });
             }

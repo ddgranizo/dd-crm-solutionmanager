@@ -12,13 +12,14 @@ namespace DD.Crm.SolutionManager.Models
 
         public MergedInSolutionComponent RemovedByComponent { get; set; }
         public List<MergedInSolutionComponent> HasRemovedComponents { get; set; }
-        
 
+        public List<MergedInSolutionComponent> ChildMergedComponents { get; set; }
 
         public MergedInSolutionComponent(SolutionComponentBase solutionComponentBase)
             : base()
         {
             HasRemovedComponents = new List<MergedInSolutionComponent>();
+            ChildMergedComponents = new List<MergedInSolutionComponent>();
             this.CreatedBy = solutionComponentBase.CreatedBy;
             this.CreatedOn = solutionComponentBase.CreatedOn;
             this.Id = solutionComponentBase.Id;
@@ -31,6 +32,7 @@ namespace DD.Crm.SolutionManager.Models
             this.RootSolutionComponentId = solutionComponentBase.RootSolutionComponentId;
             this.SolutionId = solutionComponentBase.SolutionId;
             this.Type = solutionComponentBase.Type;
+            this.ParentSolutionComponent = solutionComponentBase.ParentSolutionComponent;
         }
 
 
