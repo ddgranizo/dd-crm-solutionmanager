@@ -29,9 +29,9 @@ namespace SolutionManagerUI.Views
             _viewModel.Initialize(this);
         }
 
-        private void SolutionsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        private void WorkSolutionsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            ScrollViewer scv = SolutionsListScrollViewer;
+            ScrollViewer scv = WorkSolutionsListScrollViewer;
             scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
             e.Handled = true;
         }
@@ -43,27 +43,9 @@ namespace SolutionManagerUI.Views
             e.Handled = true;
         }
 
-        private void SolutionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void WorkSolutionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            foreach (var addedItem in e.AddedItems)
-            {
-                Solution item = addedItem as Solution;
-                var already = _viewModel.SelectedSolutions.IndexOf(item) > -1;
-                if (!already)
-                {
-                    _viewModel.SelectedSolutions.Add(item);
-                }
-            }
-
-            foreach (var removedItem in e.RemovedItems)
-            {
-                Solution item = removedItem as Solution;
-                var index = _viewModel.SelectedSolutions.IndexOf(item);
-                if (index > -1)
-                {
-                    _viewModel.SelectedSolutions.Remove(item);
-                }
-            }
+            UpdateSelectedMultiple(e, _viewModel.SelectedSolutions);
             _viewModel.RaisePropertyChanged();
         }
 
@@ -73,11 +55,49 @@ namespace SolutionManagerUI.Views
             if (e.AddedItems.Count == 1)
             {
                 MergedInSolutionComponent item = e.AddedItems[0] as MergedInSolutionComponent;
-                var listViewItem = 
+                var listViewItem =
                     SolutionComponentsList.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
                 listViewItem.Focus();
             }
 
         }
+
+        private void AggregatedSolutionsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            ScrollViewer scv = AggregatedSolutionsListScrollViewer;
+            scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
+
+        private void AggregatedSolutionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateSelectedMultiple(e, _viewModel.SelectedAggregatedSolutions);
+            _viewModel.RaisePropertyChanged();
+            _viewModel.ReloadWorkSolutions();
+        }
+
+        private void UpdateSelectedMultiple<T>(SelectionChangedEventArgs e, List<T> target)
+        {
+            foreach (var addedItem in e.AddedItems)
+            {
+                T item = (T)addedItem;
+                var already = target.IndexOf(item) > -1;
+                if (!already)
+                {
+                    target.Add(item);
+                }
+            }
+            foreach (var removedItem in e.RemovedItems)
+            {
+                T item = (T)removedItem;
+                var index = target.IndexOf(item);
+                if (index > -1)
+                {
+                    target.Remove(item);
+                }
+            }
+            _viewModel.RaisePropertyChanged();
+        }
+
     }
 }

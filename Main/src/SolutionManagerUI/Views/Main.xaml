@@ -75,13 +75,78 @@
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
+                    <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="auto"/>
-                    <ColumnDefinition />
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition Width="2*"/>
                 </Grid.ColumnDefinitions>
 
+
+                <GridSplitter HorizontalAlignment="Right" 
+                      VerticalAlignment="Stretch" 
+                      Grid.Column="1" ResizeBehavior="PreviousAndNext"
+                      Width="10" Background="#FFBCBCBC"/>
+
+
                 <Grid Grid.Column="0" Margin="5">
-                    <GroupBox Header="Solutions">
+                    <GroupBox Header="Agregated">
+                        <Grid Grid.Column="0" Margin="5">
+                            <Grid.RowDefinitions >
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadAggregatedSolutionsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
+                                </Button>
+                                <Button Grid.Column="1"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Open solution in browser" Command="{Binding Source={StaticResource viewModel}, Path=OpenAggregatedSolutionInBrowserCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="OpenInBrowser" Width="15" Height="15"/>
+                                </Button>
+                                <Label Grid.Column="2" VerticalAlignment="Center">Filter:</Label>
+                                <TextBox Grid.Column="3" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                <!--<Button Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Select solution(s)" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="ArrowCollapseRight" Width="15" Height="15"/>
+                                </Button>-->
+                            </Grid>
+                            <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Horizontal" Margin="5">
+
+                            </StackPanel>
+
+                            <ScrollViewer  x:Name="AggregatedSolutionsListScrollViewer" Grid.Row="2">
+                                <ListView x:Name="AggregatedSolutionsList"  Margin="7" ItemsSource="{Binding FilteredAgregatedSolutionsCollection}" PreviewMouseWheel="AggregatedSolutionsList_PreviewMouseWheel" SelectionChanged="AggregatedSolutionsList_SelectionChanged" SelectedItem="{Binding SelectedAggregatedSolution}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="5">
+                                                <TextBlock Text="{Binding Name}"></TextBlock>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                </ListView>
+                            </ScrollViewer>
+                        </Grid>
+                    </GroupBox>
+                </Grid>
+
+                <Grid></Grid>
+                <Grid Grid.Column="2" Visibility="{Binding IsRetrievingWorkSolutions, Converter={StaticResource BoolToCollapseConverter}}">
+                    <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Icon="Refresh" Spin="True" Height="25" Width="25" />
+                </Grid>
+                <Grid Grid.Column="2" Margin="5" Visibility="{Binding IsRetrievingWorkSolutions, Converter={StaticResource BoolToCollapseConverter}, ConverterParameter=False}">
+                    <GroupBox Header="{Binding SelectedAggregatedSolutionsString, StringFormat='Work aggregated ({0})'}">
                         <Grid Grid.Column="0" Margin="5">
                             <Grid.RowDefinitions >
                                 <RowDefinition Height="auto"/>
@@ -112,8 +177,8 @@
 
                             </StackPanel>
 
-                            <ScrollViewer  x:Name="SolutionsListScrollViewer" Grid.Row="2">
-                                <ListView x:Name="SolutionsList"  Margin="7" ItemsSource="{Binding FilteredSolutionsCollection}" PreviewMouseWheel="SolutionsList_PreviewMouseWheel" SelectionChanged="SolutionsList_SelectionChanged" SelectedItem="{Binding SelectedSolution}">
+                            <ScrollViewer  x:Name="WorkSolutionsListScrollViewer" Grid.Row="2">
+                                <ListView x:Name="WorkSolutionsList"  Margin="7" ItemsSource="{Binding FilteredSolutionsCollection}" PreviewMouseWheel="WorkSolutionsList_PreviewMouseWheel" SelectionChanged="WorkSolutionsList_SelectionChanged" SelectedItem="{Binding SelectedWorkSolution}">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="5">
@@ -135,12 +200,12 @@
 
 
                 <GridSplitter HorizontalAlignment="Right" 
-                  VerticalAlignment="Stretch" 
-                  Grid.Column="1" ResizeBehavior="PreviousAndNext"
-                  Width="10" Background="#FFBCBCBC"/>
+                      VerticalAlignment="Stretch" 
+                      Grid.Column="3" ResizeBehavior="PreviousAndNext"
+                      Width="10" Background="#FFBCBCBC"/>
 
-                <Grid Grid.Column="2" Margin="5">
-                    <GroupBox Header="{Binding SelectedSolutionsString, StringFormat='Solution components ({0})'}">
+                <Grid Grid.Column="4" Margin="5">
+                    <GroupBox Header="{Binding SelectedWorkSolutionsString, StringFormat='Solution components ({0})'}">
                         <Grid Grid.Column="0" Margin="5">
                             <Grid.RowDefinitions >
                                 <RowDefinition Height="auto"/>

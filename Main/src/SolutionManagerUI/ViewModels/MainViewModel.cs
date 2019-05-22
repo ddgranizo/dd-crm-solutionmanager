@@ -22,6 +22,141 @@ namespace SolutionManagerUI.ViewModels
 {
     public class MainViewModel : BaseViewModel
     {
+
+
+
+        private bool _isRetrievingWorkSolutions = false;
+        public bool IsRetrievingWorkSolutions
+        {
+            get
+            {
+                return _isRetrievingWorkSolutions;
+            }
+            set
+            {
+                _isRetrievingWorkSolutions = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsRetrievingWorkSolutions"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+
+        private readonly List<WorkSolution> _selectedWorkSolutions = new List<WorkSolution>();
+        public List<WorkSolution> SelectedWorkSolutions
+        {
+            get { return _selectedWorkSolutions; }
+        }
+        public string SelectedWorkSolutionsString
+        {
+            get
+            {
+                return string.Join(", ", SelectedWorkSolutions.Select(k => { return k.Name; }));
+            }
+        }
+
+
+        private WorkSolution _selectedWorkSolution = null;
+        public WorkSolution SelectedWorkSolution
+        {
+            get
+            {
+                return _selectedWorkSolution;
+            }
+            set
+            {
+                _selectedWorkSolution = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedWorkSolution"));
+            }
+        }
+
+        private readonly ObservableCollection<WorkSolution> _filteredWorkSolutionsCollection = new ObservableCollection<WorkSolution>();
+        public ObservableCollection<WorkSolution> FilteredWorkSolutionsCollection
+        {
+            get
+            {
+                return _filteredWorkSolutionsCollection;
+            }
+        }
+
+
+        private List<WorkSolution> _workSolutions = null;
+        public List<WorkSolution> WorkSolutions
+        {
+            get
+            {
+                return _workSolutions;
+            }
+            set
+            {
+                _workSolutions = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("WorkSolutions"));
+                if (AgregatedSolutions != null)
+                {
+                    UpdateListToCollection(value, FilteredWorkSolutionsCollection);
+                }
+            }
+        }
+
+
+
+        private readonly List<AggregatedSolution> _selectedAggregatedSolutions = new List<AggregatedSolution>();
+        public List<AggregatedSolution> SelectedAggregatedSolutions
+        {
+            get { return _selectedAggregatedSolutions; }
+        }
+        public string SelectedAggregatedSolutionsString
+        {
+            get
+            {
+                return string.Join(", ", SelectedAggregatedSolutions.Select(k => { return k.Name; }));
+            }
+        }
+
+
+        private AggregatedSolution _selectedAggregatedSolution = null;
+        public AggregatedSolution SelectedAggregatedSolution
+        {
+            get
+            {
+                return _selectedAggregatedSolution;
+            }
+            set
+            {
+                _selectedAggregatedSolution = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedAggregatedSolution"));
+            }
+        }
+
+        private readonly ObservableCollection<AggregatedSolution> _filteredAgregatedSolutionsCollection = new ObservableCollection<AggregatedSolution>();
+        public ObservableCollection<AggregatedSolution> FilteredAgregatedSolutionsCollection
+        {
+            get
+            {
+                return _filteredAgregatedSolutionsCollection;
+            }
+        }
+
+
+        private List<AggregatedSolution> _agregatedSolutions = null;
+        public List<AggregatedSolution> AgregatedSolutions
+        {
+            get
+            {
+                return _agregatedSolutions;
+            }
+            set
+            {
+                _agregatedSolutions = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("AgregatedSolutions"));
+                if (AgregatedSolutions != null)
+                {
+                    UpdateListToCollection(value, FilteredAgregatedSolutionsCollection);
+                }
+            }
+        }
+
+
+
         private bool _showInTree = false;
         public bool ShowInTree
         {
@@ -510,8 +645,7 @@ namespace SolutionManagerUI.ViewModels
         public void Initialize(Window window)
         {
             RegisterCommands();
-
-            //OnLoadCommand = 
+            OnLoadCommand = ReloadAggregatedSolutionsCommand;
         }
 
 
@@ -519,6 +653,45 @@ namespace SolutionManagerUI.ViewModels
         {
             RaiseCanExecuteChanged();
             OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedSolutionsString"));
+            OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedAggregatedSolutionsString"));
+
+        }
+
+
+        private Guid _retrieveWorkSolutionTaskId = Guid.NewGuid();
+        public void ReloadWorkSolutions()
+        {
+            IsRetrievingWorkSolutions = true;
+            SolutionComponents = null;
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var workSolutions = new List<WorkSolution>();
+                var isError = false;
+                var errorMessage = string.Empty;
+                try
+                {
+                    workSolutions = CurrentSolutionManager.GetWorkSolutions(SelectedAggregatedSolutions);
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }else
+                    {
+                        this.WorkSolutions = workSolutions;
+                    }
+                    IsRetrievingWorkSolutions = false;
+                });
+            }, "Retrieving work solutions...", _retrieveWorkSolutionTaskId);
+
+            
+            
         }
 
         protected override void RegisterCommands()
@@ -532,8 +705,91 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("OpenSolutionInBrowserCommand", OpenSolutionInBrowserCommand);
             Commands.Add("FindReasonWhyComponentIsNotInCommand", FindReasonWhyComponentIsNotInCommand);
 
+
+            Commands.Add("ReloadAggregatedSolutionsCommand", ReloadAggregatedSolutionsCommand);
+            Commands.Add("OpenAggregatedSolutionInBrowserCommand", OpenAggregatedSolutionInBrowserCommand);
         }
 
+
+        private ICommand _reloadWorkSolutionsCommand = null;
+        public ICommand ReloadWorkSolutionsCommand
+        {
+            get
+            {
+                if (_reloadWorkSolutionsCommand == null)
+                {
+                    _reloadWorkSolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ReloadWorkSolutions();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedAggregatedSolutions.Count > 0;
+                    });
+                }
+                return _reloadWorkSolutionsCommand;
+            }
+        }
+
+
+        private ICommand _openAggregatedSolutionInBrowserCommand = null;
+        public ICommand OpenAggregatedSolutionInBrowserCommand
+        {
+            get
+            {
+                if (_openAggregatedSolutionInBrowserCommand == null)
+                {
+                    _openAggregatedSolutionInBrowserCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var url = GetAggregatedUrl(SelectedAggregatedSolution);
+                            Process.Start("chrome.exe", url);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedAggregatedSolution != null;
+                    });
+                }
+                return _openAggregatedSolutionInBrowserCommand;
+            }
+        }
+
+        private ICommand _reloadAggregatedSolutionsCommand = null;
+        public ICommand ReloadAggregatedSolutionsCommand
+        {
+            get
+            {
+                if (_reloadAggregatedSolutionsCommand == null)
+                {
+                    _reloadAggregatedSolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            this.AgregatedSolutions = CurrentSolutionManager.GetAggregatedSolutions();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+                    });
+                }
+                return _reloadAggregatedSolutionsCommand;
+            }
+        }
 
 
 
@@ -565,6 +821,7 @@ namespace SolutionManagerUI.ViewModels
                 return _findReasonWhyComponentIsNotInCommand;
             }
         }
+
 
 
         private ICommand _openSolutionInBrowserCommand = null;
@@ -791,6 +1048,19 @@ namespace SolutionManagerUI.ViewModels
                 composedUrl = $"{composedUrl}/";
             }
             return $"{composedUrl}tools/solution/edit.aspx?id={solution.Id}";
+        }
+
+
+        //main.aspx?etc=10555&extraqs=&histKey=67155678&id=%7bB25EC1CB-CF7B-E911-A97C-000D3A23443B%7d&newWindow=true&pagetype=entityrecord#82260615
+
+        private string GetAggregatedUrl(AggregatedSolution solution)
+        {
+            var composedUrl = CurrentCrmConnection.Endpoint;
+            if (composedUrl.Last() != '/')
+            {
+                composedUrl = $"{composedUrl}/";
+            }
+            return $"{composedUrl}main.aspx?etc=10555&pagetype=entityrecord&extraqs=id%3d{solution.Id}";
         }
     }
 }

@@ -20,7 +20,7 @@ namespace DD.Crm.SolutionManager.Models
         public struct AttributeDefinitions
         {
             public const string Id = "alm_workersolutionid";
-            public const string CreatedOn = "createdon	";
+            public const string CreatedOn = "createdon";
             public const string ModifiedOn = "modifiedon";
             public const string CreatedBy = "createdby";
             public const string ModifiedBy = "modifiedby";

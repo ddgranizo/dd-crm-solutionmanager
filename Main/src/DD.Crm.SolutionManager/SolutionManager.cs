@@ -30,6 +30,40 @@ namespace DD.Crm.SolutionManager
             return CrmProvider.GetSolutions(this._service);
         }
 
+
+        public List<WorkSolution> GetWorkSolutions(List<AggregatedSolution> aggregatedSolutions)
+        {
+            return GetWorkSolutions(aggregatedSolutions.Select(k => { return k.Id; }).ToList());
+        }
+
+        public List<WorkSolution> GetWorkSolutions(List<Guid> aggregatedSolutionsIds)
+        {
+            List<WorkSolution> solutions = new List<WorkSolution>();
+            foreach (var solutionId in aggregatedSolutionsIds)
+            {
+                solutions.AddRange(GetWorkSolutions(solutionId));
+            }
+
+            return solutions;
+        }
+
+
+        public List<WorkSolution> GetWorkSolutions(AggregatedSolution aggregatedSolution)
+        {
+            return GetWorkSolutions(aggregatedSolution.Id);
+        }
+
+        public List<WorkSolution> GetWorkSolutions(Guid aggregatedSolutionId)
+        {
+            return CrmProvider.GetWorkSolutions(this._service, aggregatedSolutionId);
+        }
+
+
+        public List<AggregatedSolution> GetAggregatedSolutions()
+        {
+            return CrmProvider.GetAgregatedSolutions(this._service);
+        }
+
         public List<SolutionComponentBase> GetSolutionComponents(Guid solutionId, bool expandDefinition = false)
         {
             return CrmProvider.GetSolutionComponents(this._service, solutionId, expandDefinition);

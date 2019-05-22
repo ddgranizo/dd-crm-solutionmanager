@@ -17,7 +17,7 @@ namespace DD.Crm.SolutionManager.Utilities
     public static class CrmProvider
     {
 
-        public static List<WorkSolution> GetAgregatedSolutions(IOrganizationService service, Guid agregatedSolutionId)
+        public static List<WorkSolution> GetWorkSolutions(IOrganizationService service, Guid agregatedSolutionId)
         {
             var qe = new QueryExpression()
             {
@@ -47,8 +47,10 @@ namespace DD.Crm.SolutionManager.Utilities
                             }
                         }
             };
-            return service.RetrieveMultiple(qe)
-                    .Entities
+
+            var entities = service.RetrieveMultiple(qe)
+                    .Entities;
+            return entities
                     .Select(k => { return k.ToWorkSolution(); })
                     .ToList();
         }
@@ -57,6 +59,7 @@ namespace DD.Crm.SolutionManager.Utilities
         {
             QueryExpression qe = new QueryExpression(AggregatedSolution.EntityLogicalName);
             qe.ColumnSet = new ColumnSet(true);
+            qe.AddOrder(AggregatedSolution.AttributeDefinitions.CreatedOn, OrderType.Descending);
             return service.RetrieveMultiple(qe)
                     .Entities
                     .Select(k => { return k.ToAgreatedSolution(); })
