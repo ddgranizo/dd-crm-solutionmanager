@@ -130,6 +130,7 @@
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
+    <Compile Include="ViewModels\MergeManagerViewModel.cs" />
     <Compile Include="ViewModels\SettingManagerViewModel.cs" />
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
@@ -144,6 +145,9 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Views\MergeManager.xaml.cs">
+      <DependentUpon>MergeManager.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SettingManager.xaml.cs">
       <DependentUpon>SettingManager.xaml</DependentUpon>
     </Compile>
@@ -156,6 +160,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Main.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\MergeManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

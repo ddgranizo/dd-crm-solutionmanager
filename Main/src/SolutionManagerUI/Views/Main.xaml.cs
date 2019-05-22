@@ -27,6 +27,26 @@ namespace SolutionManagerUI.Views
             InitializeComponent();
             this._viewModel = LayoutRoot.Resources["viewModel"] as MainViewModel;
             _viewModel.Initialize(this);
+            _viewModel.OnRequetedSelectAllWorkSolutions += _viewModel_OnRequetedSelectAllWorkSolutions;
+            _viewModel.OnRequetedUnselectAllWorkSolutions += _viewModel_OnRequetedUnselectAllWorkSolutions;
+        }
+
+        private void _viewModel_OnRequetedUnselectAllWorkSolutions(object sender, EventArgs e)
+        {
+            WorkSolutionsList.UnselectAll();
+        }
+
+        private void _viewModel_OnRequetedSelectAllWorkSolutions(object sender, EventArgs e)
+        {
+            WorkSolutionsList.SelectAll();
+        }
+
+
+        private void SolutionsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            ScrollViewer scv = SolutionsListScrollViewer;
+            scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
+            e.Handled = true;
         }
 
         private void WorkSolutionsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -43,9 +63,25 @@ namespace SolutionManagerUI.Views
             e.Handled = true;
         }
 
-        private void WorkSolutionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void SolutionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateSelectedMultiple(e, _viewModel.SelectedSolutions);
+            _viewModel.RaisePropertyChanged();
+
+            SolutionsList.UpdateLayout();
+            if (e.AddedItems.Count == 1)
+            {
+                Solution item = e.AddedItems[0] as Solution;
+                var listViewItem =
+                    SolutionsList.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
+                listViewItem.Focus();
+            }
+        }
+
+
+        private void WorkSolutionsList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateSelectedMultiple(e, _viewModel.SelectedWorkSolutions);
             _viewModel.RaisePropertyChanged();
         }
 
@@ -99,5 +135,36 @@ namespace SolutionManagerUI.Views
             _viewModel.RaisePropertyChanged();
         }
 
+        private void WorkSolutionsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ICommand c = _viewModel.OpenWorkSolutionInBrowserCommand;
+            if (c.CanExecute(null))
+            {
+                c.Execute(null);
+            }
+        }
+
+        private void SolutionsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ICommand c = _viewModel.OpenSolutionInBrowserCommand;
+            if (c.CanExecute(null))
+            {
+                c.Execute(null);
+            }
+        }
+
+        private void AggregatedSolutionsList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            ICommand c = _viewModel.OpenAggregatedSolutionInBrowserCommand;
+            if (c.CanExecute(null))
+            {
+                c.Execute(null);
+            }
+        }
+
+        private void SolutionsList_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
+        {
+
+        }
     }
 }

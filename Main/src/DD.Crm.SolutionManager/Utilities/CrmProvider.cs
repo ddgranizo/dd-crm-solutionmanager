@@ -1,6 +1,7 @@
 ﻿using DD.Crm.SolutionManager.Extensions;
 using DD.Crm.SolutionManager.Models;
 using DD.Crm.SolutionManager.Models.Data;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -17,6 +18,54 @@ namespace DD.Crm.SolutionManager.Utilities
     public static class CrmProvider
     {
 
+        public static Solution CreateSolution(
+            IOrganizationService service, 
+            string name, 
+            string uniqueName, 
+            EntityReference publisher, 
+            string description)
+        {
+            Entity e = new Entity(Solution.EntityLogicalName);
+            e[Solution.AttributeDefinitions.DisplayName] = name;
+            e[Solution.AttributeDefinitions.UniqueName] = uniqueName;
+            e[Solution.AttributeDefinitions.Publisher] = publisher;
+            e[Solution.AttributeDefinitions.Description] = description;
+            e[Solution.AttributeDefinitions.Version] = "1.0.0.0";
+            var id = service.Create(e);
+            return service.Retrieve(Solution.EntityLogicalName, id, new ColumnSet(true)).ToSolution();
+        }
+
+        public static void AddComponentToSolution(
+            IOrganizationService service,
+            Guid solutionId,
+            SolutionComponentBase component)
+        {
+            var solution = service.Retrieve(Solution.EntityLogicalName, solutionId, new ColumnSet(true))
+                .ToSolution();
+            AddComponentToSolution(service, solution.UniqueName, component);
+        }
+        public static void AddComponentToSolution(
+            IOrganizationService service, 
+            string solutionUniqueName, 
+            SolutionComponentBase component)
+        {
+            AddSolutionComponentRequest addReq = new AddSolutionComponentRequest()
+            {
+                ComponentType = (int)component.Type,
+                ComponentId = component.ObjectId,
+                SolutionUniqueName = solutionUniqueName,
+                AddRequiredComponents = false
+            };
+
+            if (component.Type == SolutionComponentBase.SolutionComponentType.Entity)
+            {
+                addReq.DoNotIncludeSubcomponents =
+                    component.RootComponentBehavior == SolutionComponentBase.RootComponentBehaviorType.DoNotIncludeSubcomponents
+                    || component.RootComponentBehavior == SolutionComponentBase.RootComponentBehaviorType.IncludeAsShellOnly;
+            }
+
+            service.Execute(addReq);
+        }
         public static List<WorkSolution> GetWorkSolutions(IOrganizationService service, Guid agregatedSolutionId)
         {
             var qe = new QueryExpression()

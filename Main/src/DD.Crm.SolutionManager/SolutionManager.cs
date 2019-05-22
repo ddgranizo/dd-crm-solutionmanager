@@ -25,11 +25,28 @@ namespace DD.Crm.SolutionManager
             this._service = service;
         }
 
+        public Solution CreateSolution(string name, string uniqueName, EntityReference pubisher, string description)
+        {
+            return CrmProvider.CreateSolution(_service, name, uniqueName, pubisher, description);
+        }
+
+        public void CreateMergedSolution(Guid solutionId, List<MergedInSolutionComponent> components)
+        {
+            foreach (var item in components.OrderBy(k => k.GetOrderWeight()))
+            {
+                CrmProvider.AddComponentToSolution(_service, solutionId, item);
+            }
+        }
+
+        public void CreateMergedSolution(Solution solution, List<MergedInSolutionComponent> components)
+        {
+            CreateMergedSolution(solution.Id, components);
+        }
+
         public List<Solution> GetSolutions()
         {
             return CrmProvider.GetSolutions(this._service);
         }
-
 
         public List<WorkSolution> GetWorkSolutions(List<AggregatedSolution> aggregatedSolutions)
         {

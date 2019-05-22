@@ -20,9 +20,63 @@ using System.Windows.Input;
 
 namespace SolutionManagerUI.ViewModels
 {
+
+    public delegate void OnRequetedSelectionListHandler(object sender, EventArgs e);
+
     public class MainViewModel : BaseViewModel
     {
 
+        public event OnRequetedSelectionListHandler OnRequetedSelectAllWorkSolutions;
+        public event OnRequetedSelectionListHandler OnRequetedUnselectAllWorkSolutions;
+
+
+        private bool _isAggregatedWorkSolutionMode = false;
+        public bool IsAggregatedWorkSolutionMode
+        {
+            get
+            {
+                return _isAggregatedWorkSolutionMode;
+            }
+            set
+            {
+                _isAggregatedWorkSolutionMode = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsAggregatedWorkSolutionMode"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+        private bool _isSolutionMode = false;
+        public bool IsSolutionMode
+        {
+            get
+            {
+                return _isSolutionMode;
+            }
+            set
+            {
+                _isSolutionMode = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsSolutionMode"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+
+        public bool IsLoadingSolutionsPanel { get { return IsRetrievingSolutions || IsRetrievingWorkSolutions; } }
+        private bool _isRetrievingSolutions = false;
+        public bool IsRetrievingSolutions
+        {
+            get
+            {
+                return _isRetrievingSolutions;
+            }
+            set
+            {
+                _isRetrievingSolutions = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsRetrievingSolutions"));
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsLoadingSolutionsPanel"));
+                RaiseCanExecuteChanged();
+            }
+        }
 
 
         private bool _isRetrievingWorkSolutions = false;
@@ -36,6 +90,22 @@ namespace SolutionManagerUI.ViewModels
             {
                 _isRetrievingWorkSolutions = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsRetrievingWorkSolutions"));
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsLoadingSolutionsPanel"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+        private bool _isRetrievingSolutionComponents = false;
+        public bool IsRetrievingSolutionComponents
+        {
+            get
+            {
+                return _isRetrievingSolutionComponents;
+            }
+            set
+            {
+                _isRetrievingSolutionComponents = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsRetrievingSolutionComponents"));
                 RaiseCanExecuteChanged();
             }
         }
@@ -94,6 +164,8 @@ namespace SolutionManagerUI.ViewModels
                 {
                     UpdateListToCollection(value, FilteredWorkSolutionsCollection);
                 }
+
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -108,7 +180,12 @@ namespace SolutionManagerUI.ViewModels
         {
             get
             {
-                return string.Join(", ", SelectedAggregatedSolutions.Select(k => { return k.Name; }));
+                if (IsAggregatedWorkSolutionMode)
+                {
+                    return string.Join(", ", SelectedAggregatedSolutions.Select(k => { return k.Name; }));
+                }
+                return "Solutions";
+
             }
         }
 
@@ -442,10 +519,10 @@ namespace SolutionManagerUI.ViewModels
                 RaiseCanExecuteChanged();
                 if (CurrentSolutionManager != null && OnLoadCommand != null)
                 {
-                    ICommand reloadSolutionsCommand = OnLoadCommand;
-                    if (OnLoadCommand.CanExecute(null))
+                    ICommand c = OnLoadCommand;
+                    if (c.CanExecute(null))
                     {
-                        OnLoadCommand.Execute(null);
+                        c.Execute(null);
                     }
                 }
             }
@@ -586,51 +663,95 @@ namespace SolutionManagerUI.ViewModels
 
 
         private Guid _retrieveSolutionsTaskId = Guid.NewGuid();
-        private void ReloadSolutions()
+        private void ReloadSolutions(Solution selectSolution = null)
         {
-            SetDialog("Retrieving solutions...");
+            IsRetrievingSolutions = true;
+            SolutionComponents = new List<MergedInSolutionComponent>();
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 var solutions = new List<Solution>();
+                var isError = false;
+                var errorMessage = string.Empty;
                 try
                 {
                     solutions = CurrentSolutionManager.GetSolutions();
                 }
                 catch (Exception ex)
                 {
-                    UpdateDialogMessage(ex.Message, 2000);
+                    isError = true;
+                    errorMessage = ex.Message;
                 }
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    this.Solutions = solutions;
-                    UnsetDialog();
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        this.Solutions = solutions;
+                        if (selectSolution != null)
+                        {
+                            SelectSolutionAsync(selectSolution);
+                        }
+                    }
+                    IsRetrievingSolutions = false;
                 });
             }, "Retrieving solutions...", _retrieveSolutionsTaskId);
         }
 
 
+        private Guid _selectSolutionAsyncTaskId = Guid.NewGuid();
+        private void SelectSolutionAsync(Solution selectSolution)
+        {
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    SelectedSolution = selectSolution;
+                });
+            }, "Retrieving solutions...", _selectSolutionAsyncTaskId, 1000);
+            
+        }
+
         private Guid _retrieveSolutionComponentsTaskId = Guid.NewGuid();
         private void ReloadSolutionComponents()
         {
-            SetDialog("Retrieving solution components...");
+            IsRetrievingSolutionComponents = true;
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 var solutionComponents = new List<MergedInSolutionComponent>();
+                var isError = false;
+                var errorMessage = string.Empty;
                 try
                 {
-                    solutionComponents = CurrentSolutionManager.GetMergedSolutionComponents(SelectedSolutions, true);
+
+                    var solutionIds = IsAggregatedWorkSolutionMode
+                        ? SelectedWorkSolutions.Select(k => { return k.SolutionId; }).ToList()
+                        : SelectedSolutions.Select(k => { return k.Id; }).ToList();
+                    solutionComponents =
+                        CurrentSolutionManager
+                        .GetMergedSolutionComponents(solutionIds, true);
                 }
                 catch (Exception ex)
                 {
-                    UpdateDialogMessage(ex.Message, 2000);
+                    isError = true;
+                    errorMessage = ex.Message;
                 }
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    this.SolutionComponents =
-                        solutionComponents
-                            .OrderBy(k => k.GetOrderWeight())
-                            .ToList();
-                    UnsetDialog();
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        this.SolutionComponents =
+                            solutionComponents
+                                .OrderBy(k => k.GetOrderWeight())
+                                .ToList();
+                    }
+                    IsRetrievingSolutionComponents = false;
                 });
             }, "Retrieving solution components...", _retrieveSolutionComponentsTaskId);
         }
@@ -645,7 +766,9 @@ namespace SolutionManagerUI.ViewModels
         public void Initialize(Window window)
         {
             RegisterCommands();
-            OnLoadCommand = ReloadAggregatedSolutionsCommand;
+            IsAggregatedWorkSolutionMode = true;
+            OnLoadCommand = InitialReloadCommand;
+
         }
 
 
@@ -682,16 +805,22 @@ namespace SolutionManagerUI.ViewModels
                     if (isError)
                     {
                         MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }else
+                    }
+                    else
                     {
                         this.WorkSolutions = workSolutions;
+                        ICommand c = MarkUnmarkAllWorkSolutionsCommand;
+                        if (c.CanExecute(null))
+                        {
+                            c.Execute(null);
+                        }
                     }
                     IsRetrievingWorkSolutions = false;
                 });
             }, "Retrieving work solutions...", _retrieveWorkSolutionTaskId);
 
-            
-            
+
+
         }
 
         protected override void RegisterCommands()
@@ -702,14 +831,161 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("DisconnectCommand", DisconnectCommand);
             Commands.Add("ReloadSolutionsCommand", ReloadSolutionsCommand);
             Commands.Add("ReloadSolutionComponentsCommand", ReloadSolutionComponentsCommand);
-            Commands.Add("OpenSolutionInBrowserCommand", OpenSolutionInBrowserCommand);
             Commands.Add("FindReasonWhyComponentIsNotInCommand", FindReasonWhyComponentIsNotInCommand);
 
 
             Commands.Add("ReloadAggregatedSolutionsCommand", ReloadAggregatedSolutionsCommand);
             Commands.Add("OpenAggregatedSolutionInBrowserCommand", OpenAggregatedSolutionInBrowserCommand);
+            Commands.Add("ReloadWorkSolutionsCommand", ReloadWorkSolutionsCommand);
+
+            Commands.Add("OpenWorkSolutionInBrowserCommand", OpenWorkSolutionInBrowserCommand);
+            Commands.Add("OpenSolutionInBrowserCommand", OpenSolutionInBrowserCommand);
+
+            Commands.Add("MarkUnmarkAllWorkSolutionsCommand", MarkUnmarkAllWorkSolutionsCommand);
+
+
+            Commands.Add("SetAggregatedWorkSolutionsModeCommand", SetAggregatedWorkSolutionsModeCommand);
+            Commands.Add("SetSolutionsModeCommand", SetSolutionsModeCommand);
+
+            Commands.Add("InitialReloadCommand", InitialReloadCommand);
+
+            Commands.Add("DoMergeCommand", DoMergeCommand);
+
         }
 
+
+        private ICommand _doMergeCommand = null;
+        public ICommand DoMergeCommand
+        {
+            get
+            {
+                if (_doMergeCommand == null)
+                {
+                    _doMergeCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var solutionItemsForMerge =
+                                SolutionComponents
+                                    .Where(k => k.IsIn)
+                                    .OrderBy(k=>k.GetOrderWeight())
+                                    .ToList();
+                            MergeManager mergeManager = 
+                                new MergeManager(
+                                    Service, 
+                                    CurrentCrmConnection, 
+                                    CurrentSolutionManager, 
+                                    SelectedSolutions,
+                                    Solutions, 
+                                    solutionItemsForMerge);
+                            mergeManager.ShowDialog();
+                            SolutionFilter = null;
+                            var solutionCreated = mergeManager.GetViewModel().MergedSolution;
+                            ReloadSolutions(solutionCreated);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return FilteredSolutionComponentsCollection.Count > 0;
+                    });
+                }
+                return _doMergeCommand;
+            }
+        }
+
+        private ICommand _setSolutionsModeCommand = null;
+        public ICommand SetSolutionsModeCommand
+        {
+            get
+            {
+                if (_setSolutionsModeCommand == null)
+                {
+                    _setSolutionsModeCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            IsAggregatedWorkSolutionMode = false;
+                            IsSolutionMode = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _setSolutionsModeCommand;
+            }
+        }
+
+
+        private ICommand _setAggregatedWorkSolutionsModeCommand = null;
+        public ICommand SetAggregatedWorkSolutionsModeCommand
+        {
+            get
+            {
+                if (_setAggregatedWorkSolutionsModeCommand == null)
+                {
+                    _setAggregatedWorkSolutionsModeCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            IsAggregatedWorkSolutionMode = true;
+                            IsSolutionMode = false;
+
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _setAggregatedWorkSolutionsModeCommand;
+            }
+        }
+
+
+
+        private ICommand _markUnmarkAllWorkSolutionsCommand = null;
+        public ICommand MarkUnmarkAllWorkSolutionsCommand
+        {
+            get
+            {
+                if (_markUnmarkAllWorkSolutionsCommand == null)
+                {
+                    _markUnmarkAllWorkSolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            if (SelectedWorkSolutions.Count == WorkSolutions.Count)
+                            {
+                                OnRequetedUnselectAllWorkSolutions?.Invoke(this, new EventArgs());
+                            }
+                            else
+                            {
+                                OnRequetedSelectAllWorkSolutions?.Invoke(this, new EventArgs());
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return WorkSolutions != null && WorkSolutions.Count > 0;
+                    });
+                }
+                return _markUnmarkAllWorkSolutionsCommand;
+            }
+        }
 
         private ICommand _reloadWorkSolutionsCommand = null;
         public ICommand ReloadWorkSolutionsCommand
@@ -791,7 +1067,43 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
-
+        private ICommand _initialReloadCommand = null;
+        public ICommand InitialReloadCommand
+        {
+            get
+            {
+                if (_initialReloadCommand == null)
+                {
+                    _initialReloadCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ICommand c = null;
+                            if (IsSolutionMode)
+                            {
+                                c = ReloadSolutionsCommand;
+                            }
+                            if (IsAggregatedWorkSolutionMode)
+                            {
+                                c = ReloadAggregatedSolutionsCommand;
+                            }
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _initialReloadCommand;
+            }
+        }
 
         private ICommand _findReasonWhyComponentIsNotInCommand = null;
         public ICommand FindReasonWhyComponentIsNotInCommand
@@ -822,8 +1134,6 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
-
-
         private ICommand _openSolutionInBrowserCommand = null;
         public ICommand OpenSolutionInBrowserCommand
         {
@@ -851,6 +1161,33 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
+        private ICommand _openWorkSolutionInBrowserCommand = null;
+        public ICommand OpenWorkSolutionInBrowserCommand
+        {
+            get
+            {
+                if (_openWorkSolutionInBrowserCommand == null)
+                {
+                    _openWorkSolutionInBrowserCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var url = GetWorkSolutionUrl(SelectedWorkSolution);
+                            Process.Start("chrome.exe", url);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedWorkSolution != null;
+                    });
+                }
+                return _openWorkSolutionInBrowserCommand;
+            }
+        }
+
 
         private ICommand _reloadSolutionComponentsCommand = null;
         public ICommand ReloadSolutionComponentsCommand
@@ -871,7 +1208,14 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return CurrentSolutionManager != null;
+
+                        return (IsAggregatedWorkSolutionMode
+                                && SelectedWorkSolutions != null
+                                && SelectedWorkSolutions.Count > 0
+                                ||
+                                IsSolutionMode
+                                && SelectedSolutions != null
+                                && SelectedSolutions.Count > 0);
                     });
                 }
                 return _reloadSolutionComponentsCommand;
@@ -1050,7 +1394,15 @@ namespace SolutionManagerUI.ViewModels
             return $"{composedUrl}tools/solution/edit.aspx?id={solution.Id}";
         }
 
-
+        private string GetWorkSolutionUrl(WorkSolution solution)
+        {
+            var composedUrl = CurrentCrmConnection.Endpoint;
+            if (composedUrl.Last() != '/')
+            {
+                composedUrl = $"{composedUrl}/";
+            }
+            return $"{composedUrl}main.aspx?etc=10554&pagetype=entityrecord&extraqs=id%3d{solution.Id}";
+        }
         //main.aspx?etc=10555&extraqs=&histKey=67155678&id=%7bB25EC1CB-CF7B-E911-A97C-000D3A23443B%7d&newWindow=true&pagetype=entityrecord#82260615
 
         private string GetAggregatedUrl(AggregatedSolution solution)
