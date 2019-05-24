@@ -74,7 +74,10 @@ namespace SolutionManagerUI.Views
                 Solution item = e.AddedItems[0] as Solution;
                 var listViewItem =
                     SolutionsList.ItemContainerGenerator.ContainerFromItem(item) as ListViewItem;
-                listViewItem.Focus();
+                if (item != null)
+                {
+                    listViewItem.Focus();
+                }
             }
         }
 

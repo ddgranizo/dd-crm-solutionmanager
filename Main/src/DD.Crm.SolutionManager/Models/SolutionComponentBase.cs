@@ -83,6 +83,14 @@ namespace DD.Crm.SolutionManager.Models
 
         public string TypeString { get { return Type.ToString(); } }
 
+        public bool IsNotParentInSameSolution
+        {
+            get
+            {
+                return IsChild && ParentSolutionComponent == null;
+            }
+        }
+
         public object ObjectDefinition { get; set; }
         public string DisplayName
         {
@@ -139,7 +147,7 @@ namespace DD.Crm.SolutionManager.Models
             }
         }
 
-        
+
         public bool IsChild { get { return IsChildComponent(); } }
 
         public bool IsChildComponent()

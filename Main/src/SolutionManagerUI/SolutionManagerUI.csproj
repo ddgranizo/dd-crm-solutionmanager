@@ -34,6 +34,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>icons8-idea-128.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="FontAwesome.WPF, Version=4.7.0.37774, Culture=neutral, PublicKeyToken=0758b07a11a4f466, processorArchitecture=MSIL">
       <HintPath>..\..\packages\FontAwesome.WPF.4.7.0.9\lib\net40\FontAwesome.WPF.dll</HintPath>
@@ -109,6 +112,7 @@
     <Compile Include="Controls\SolutionComponent.xaml.cs">
       <DependentUpon>SolutionComponent.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\WorkSolutionStatusToBackgroundConverter.cs" />
     <Compile Include="Converters\BoolToOpacy.cs" />
     <Compile Include="Converters\ComponentBehaviorIncludeMetadataToVisibilityConverter.cs" />
     <Compile Include="Converters\ComponentBehaviorIncludeAllToVisibilityConverter.cs" />
@@ -130,7 +134,7 @@
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
-    <Compile Include="ViewModels\MergeManagerViewModel.cs" />
+    <Compile Include="ViewModels\MergeSolutionsManagerViewModel.cs" />
     <Compile Include="ViewModels\SettingManagerViewModel.cs" />
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
@@ -145,8 +149,8 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Views\MergeManager.xaml.cs">
-      <DependentUpon>MergeManager.xaml</DependentUpon>
+    <Compile Include="Views\MergeSolutionsManager.xaml.cs">
+      <DependentUpon>MergeSolutionsManager.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\SettingManager.xaml.cs">
       <DependentUpon>SettingManager.xaml</DependentUpon>
@@ -163,7 +167,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\MergeManager.xaml">
+    <Page Include="Views\MergeSolutionsManager.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -209,6 +213,9 @@
       <Project>{6202C2CD-20A0-4140-9674-35EBD030A6E0}</Project>
       <Name>DD.Crm.SolutionManager</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icons8-idea-128.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

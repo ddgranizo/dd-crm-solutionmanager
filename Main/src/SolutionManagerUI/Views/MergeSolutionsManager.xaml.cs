@@ -20,27 +20,29 @@ using System.Windows.Shapes;
 namespace SolutionManagerUI.Views
 {
     /// <summary>
-    /// Interaction logic for MergeManager.xaml
+    /// Interaction logic for MergeSolutionsManager.xaml
     /// </summary>
-    public partial class MergeManager : Window
+    public partial class MergeSolutionsManager : Window
     {
-        private MergeManagerViewModel _viewModel;
-        public MergeManager(
+        private MergeSolutionsManagerViewModel _viewModel;
+        public MergeSolutionsManager(
             IOrganizationService service,
             CrmConnection currentCrmConnection,
             SolutionManager solutionManager,
+            List<Setting> settings,
             List<Solution> selectedSolutions,
             List<Solution> allSolutions,
-            List<MergedInSolutionComponent> solutionComponents)
+            List<MergedInSolutionComponent> solutionComponents,
+            AggregatedSolution aggregatedSolution)
         {
             InitializeComponent();
-            this._viewModel = LayoutRoot.Resources["viewModel"] as MergeManagerViewModel;
-            _viewModel.Initialize(this, service, currentCrmConnection, solutionManager, selectedSolutions, allSolutions, solutionComponents);
+            this._viewModel = LayoutRoot.Resources["viewModel"] as MergeSolutionsManagerViewModel;
+            _viewModel.Initialize(this, service, currentCrmConnection, solutionManager, settings, selectedSolutions, allSolutions, solutionComponents, aggregatedSolution);
 
         }
 
 
-        public MergeManagerViewModel GetViewModel()
+        public MergeSolutionsManagerViewModel GetViewModel()
         {
             return _viewModel;
         }

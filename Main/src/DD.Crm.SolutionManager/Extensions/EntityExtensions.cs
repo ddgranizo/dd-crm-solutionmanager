@@ -78,7 +78,7 @@ namespace DD.Crm.SolutionManager.Extensions
 
         public static FormData ToFormData(this Entity e)
         {
-            return GetGenericData<FormData>(e);
+            return GetGenericData<FormData>(e, true);
         }
 
         public static HierarchyRuleData ToHierarchyRuleData(this Entity e)
@@ -137,7 +137,7 @@ namespace DD.Crm.SolutionManager.Extensions
             return GetGenericData<WorkflowData>(e);
         }
 
-        public static T GetGenericData<T>(Entity e) where T : BaseEntity, new()
+        public static T GetGenericData<T>(Entity e, bool includeObjectTypeCode = false) where T : BaseEntity, new()
         {
             T a = new T();
             a.Id = e.Id;
@@ -147,6 +147,10 @@ namespace DD.Crm.SolutionManager.Extensions
             }
             a.Name = null;
             a.DisplayName = e.GetParameter<string>("name");
+            if (includeObjectTypeCode)
+            {
+                a.ObjectTypeCode = e.GetAttributeValue<string>("objecttypecode");
+            }
             return a;
         }
 

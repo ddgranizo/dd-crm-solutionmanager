@@ -26,17 +26,91 @@ namespace SolutionManagerUI.ViewModels
         ExistingSolution
     }
 
-    public class MergeManagerViewModel : BaseViewModel
+    public class MergeSolutionsManagerViewModel : BaseViewModel
     {
 
+        private const string AggregatedSolutionNameKey = "AGGREGATED_SOLUTION_NAME";
+        private const string AggregatedSolutionDefaultName = "AGGR_{0}_{1}";
+        private const string DefaultPublisherSettingKey = "DEFAULT_PUBLISHER_ID";
+        private const string PublisherLogicalName = "publisher";
 
+        private bool _isAggregatedMode = false;
+        public bool IsAggregatedMode
+        {
+            get
+            {
+                return _isAggregatedMode;
+            }
+            set
+            {
+                _isAggregatedMode = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsAggregatedMode"));
+            }
+        }
+
+
+        private AggregatedSolution _currentAggregatedSolution = null;
+        public AggregatedSolution CurrentAggregatedSolution
+        {
+            get
+            {
+                return _currentAggregatedSolution;
+            }
+            set
+            {
+                _currentAggregatedSolution = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentAggregatedSolution"));
+            }
+        }
+
+        private string _messageDialog = null;
+        public string MessageDialog
+        {
+            get
+            {
+                return _messageDialog;
+            }
+            set
+            {
+                _messageDialog = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("MessageDialog"));
+            }
+        }
+
+        private bool _isDialogOpen = false;
+        public bool IsDialogOpen
+        {
+            get
+            {
+                return _isDialogOpen;
+            }
+            set
+            {
+                _isDialogOpen = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsDialogOpen"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+
+
+
+        private string _uniqueName = null;
         public string UniqueName
         {
             get
             {
-                return RemoveDiacritics(NewDisplayName);
+                return _uniqueName;
+            }
+            set
+            {
+                _uniqueName = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("UniqueName"));
             }
         }
+
+
+
         private string _newDisplayName = null;
         public string NewDisplayName
         {
@@ -48,7 +122,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _newDisplayName = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewDisplayName"));
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("UniqueName"));
+                UniqueName = RemoveDiacritics(value);
                 RaiseCanExecuteChanged();
             }
         }
@@ -79,7 +153,6 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-
         private List<EntityReference> _publishers = null;
         public List<EntityReference> Publishers
         {
@@ -97,7 +170,6 @@ namespace SolutionManagerUI.ViewModels
                 }
             }
         }
-
 
 
         private string _solutionFilter = null;
@@ -157,7 +229,6 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-
         private List<Solution> _sourceSolutions = null;
         public List<Solution> SourceSolutions
         {
@@ -173,6 +244,7 @@ namespace SolutionManagerUI.ViewModels
                 {
                     UpdateListToCollection(_sourceSolutions, FilteredSourceSolutionsCollection);
                 }
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -182,7 +254,6 @@ namespace SolutionManagerUI.ViewModels
 
 
         public IOrganizationService Service { get; set; }
-
 
 
         private OperationType _currentOperationType = OperationType.CreateSolution;
@@ -212,7 +283,6 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-
         private List<MergedInSolutionComponent> _solutionComponents = null;
         public List<MergedInSolutionComponent> SolutionComponents
         {
@@ -232,10 +302,12 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+
+        public List<WorkSolution> WorkSolutions { get; set; }
+
         public CrmConnection CurrentCrmConnection { get; set; }
         public SolutionManager CurrentSolutionManager { get; set; }
         private Window _window;
-
 
         private void FilterAndSetSolutionCollection()
         {
@@ -262,14 +334,21 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
+
+        public Guid DefaultPublisherId { get; set; }
+
+
+
         public void Initialize(
             Window window,
             IOrganizationService service,
             CrmConnection crmConnection,
             SolutionManager solutionManager,
+            List<Setting> settings,
             List<Solution> selectedSolutions,
             List<Solution> allSolutions,
-            List<MergedInSolutionComponent> solutionComponents)
+            List<MergedInSolutionComponent> solutionComponents,
+            AggregatedSolution aggregatedSolution)
         {
             this._window = window;
             this.SolutionComponents = solutionComponents;
@@ -277,19 +356,100 @@ namespace SolutionManagerUI.ViewModels
             this.SourceSolutions = allSolutions;
             this.CurrentCrmConnection = crmConnection;
             this.CurrentSolutionManager = solutionManager;
-
             this.MergedSolution = null;
 
-            this.Publishers = selectedSolutions
+            if (selectedSolutions != null && selectedSolutions.Count > 0)
+            {
+                this.Publishers = selectedSolutions
                 .GroupBy(k => k.Publisher.Id)
                 .Select(group => group.First())
                 .Select(k => { return k.Publisher; }).ToList();
-            if (this.Publishers.Count > 0)
+                if (this.Publishers.Count > 0)
+                {
+                    this.SelectedPublisher = this.Publishers[0];
+                }
+            }
+            IsAggregatedMode = false;
+            if (aggregatedSolution != null)
             {
-                this.SelectedPublisher = this.Publishers[0];
+                IsAggregatedMode = true;
+                PrepareAggregatedSolution(settings, aggregatedSolution);
             }
 
             RegisterCommands();
+        }
+
+        private void PrepareAggregatedSolution(List<Setting> settings, AggregatedSolution aggregatedSolution)
+        {
+            var aggregatedSolutionName = SettingsManager.GetSetting<string>(settings, AggregatedSolutionNameKey, AggregatedSolutionDefaultName);
+            var defaultPublisherIdStr = SettingsManager.GetSetting<string>(settings, DefaultPublisherSettingKey, string.Empty);
+            if (string.IsNullOrEmpty(defaultPublisherIdStr))
+            {
+                throw new Exception($"Cannot find {DefaultPublisherSettingKey} as a Setting");
+            }
+            if (!Guid.TryParse(defaultPublisherIdStr, out Guid defaultPublisherId))
+            {
+                throw new Exception($"Found setting {DefaultPublisherSettingKey} is not a valid Guid");
+            }
+            var publisherName = GetPublisherName(defaultPublisherId);
+
+            SelectedPublisher = new EntityReference()
+            {
+                Id = defaultPublisherId,
+                Name = publisherName,
+                LogicalName = PublisherLogicalName,
+            };
+            ReloadSolutionComponentFromAggregatedSolution(aggregatedSolution);
+
+
+            var uniqueName = RemoveDiacritics(aggregatedSolution.Name);
+            this.NewDisplayName = string.Format(aggregatedSolutionName, aggregatedSolution.Type.ToString(), uniqueName);
+            this.UniqueName = NewDisplayName;
+
+        }
+
+
+        private string GetPublisherName(Guid publisherId)
+        {
+            var publisher = Service.Retrieve(PublisherLogicalName, publisherId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            return publisher.GetAttributeValue<string>("friendlyname");
+        }
+
+        private Guid _reloadComponentsTaskId = Guid.NewGuid();
+        private void ReloadSolutionComponentFromAggregatedSolution(AggregatedSolution aggregatedSolution)
+        {
+            SetDialog("Retrieving components...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var isError = false;
+                var errorMessage = string.Empty;
+
+                List<MergedInSolutionComponent> mergedSolutionComponents = new List<MergedInSolutionComponent>();
+                var workSolutions = new List<WorkSolution>();
+                try
+                {
+                    workSolutions = CurrentSolutionManager.GetWorkSolutions(aggregatedSolution);
+                    mergedSolutionComponents = CurrentSolutionManager.GetMergedSolutionComponents(workSolutions, true);
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        WorkSolutions = workSolutions;
+                        SolutionComponents = mergedSolutionComponents;
+                    }
+                    UnsetDialog();
+                });
+            }, "Retrieving components...", _reloadComponentsTaskId);
         }
 
         protected override void RegisterCommands()
@@ -337,43 +497,106 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            if (IsVisibleExistingSolutionSection)
+
+                            Solution targetSolution = null;
+
+                            if (IsAggregatedMode || IsVisibleCreateSolutionSection)
                             {
-                                CurrentSolutionManager.CreateMergedSolution(SelectedSolution, SolutionComponents);
-                                MergedSolution = SelectedSolution;
+                                targetSolution = CreateSolution();
                             }
                             else
                             {
-                                var description = new StringBuilder();
-                                description
-                                    .AppendLine(
-                                        string.Format("## Solution generanted automatically by {0} at {1} ##",
-                                        CurrentCrmConnection.Username,
-                                        DateTime.Now.ToString()));
-                                var solution = CurrentSolutionManager.CreateSolution(NewDisplayName, UniqueName, SelectedPublisher, description.ToString());
-                                CurrentSolutionManager.CreateMergedSolution(solution, SolutionComponents);
-                                MergedSolution = solution;
+                                targetSolution = SelectedSolution;
                             }
-                            MessageBox.Show("The merged has been completed", "Completed", MessageBoxButton.OK, MessageBoxImage.Information);
-                            _window.Close();
+
+                            MergeSolutionResult(targetSolution);
+
+
                         }
                         catch (Exception ex)
                         {
-                            //TODO: roll back
+
                             RaiseError(ex.Message);
                         }
                     }, (param) =>
                     {
-                        return (IsVisibleExistingSolutionSection
+                        return
+                            IsAggregatedMode && (
+                                 !IsDialogOpen
+                                 && SolutionComponents.Count > 0
+                            )
+                            || (IsVisibleExistingSolutionSection
                             && SelectedSolution != null)
-                            || 
-                            (IsVisibleCreateSolutionSection 
+                            ||
+                            (IsVisibleCreateSolutionSection
                             && !string.IsNullOrEmpty(NewDisplayName)
                             && SelectedPublisher != null);
                     });
                 }
                 return _doMergeCommand;
             }
+        }
+
+        private Solution CreateSolution()
+        {
+            Solution targetSolution;
+            var description = new StringBuilder();
+            description
+                .AppendLine(
+                    string.Format("## Solution generanted automatically by {0} at {1} ##",
+                    CurrentCrmConnection.Username,
+                    DateTime.Now.ToString()));
+            if (WorkSolutions!=null)
+            {
+                foreach (var item in WorkSolutions)
+                {
+                    description.AppendLine($"-{item.Jira}");
+                }
+            }
+            var solution = CurrentSolutionManager.CreateSolution(NewDisplayName, UniqueName, SelectedPublisher, description.ToString());
+            targetSolution = solution;
+            return targetSolution;
+        }
+
+        private Guid _mergeTaskId = Guid.NewGuid();
+        private void MergeSolutionResult(Solution targetSolution)
+        {
+            SetDialog("Merging...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var isError = false;
+                var errorMessage = string.Empty;
+
+                try
+                {
+                    var currentComponents = CurrentSolutionManager.GetSolutionComponents(targetSolution.Id, false);
+                    if (currentComponents.Count > 0)
+                    {
+                        throw new Exception("Target solution already has components");
+                    }
+                    CurrentSolutionManager.CreateMergedSolution(targetSolution, SolutionComponents);
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        MergedSolution = targetSolution;
+                        _window.Close();
+                    }
+                    UnsetDialog();
+                });
+            }, "Merging solution components...", _mergeTaskId);
+
+
         }
 
         private string GetSolutionUrl(Solution solution)
@@ -411,5 +634,29 @@ namespace SolutionManagerUI.ViewModels
 
             return stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
         }
+
+
+        private void SetDialog(string message)
+        {
+            IsDialogOpen = true;
+            this.MessageDialog = message;
+        }
+
+        private void UpdateDialogMessage(string message, int unsetInMs = 0)
+        {
+            this.MessageDialog = message;
+            if (unsetInMs > 0)
+            {
+                var timer = new System.Timers.Timer(unsetInMs);
+                timer.Elapsed += (sender, e) => { UnsetDialog(); timer.Stop(); };
+                timer.Start();
+            }
+        }
+
+        private void UnsetDialog()
+        {
+            IsDialogOpen = false;
+        }
+
     }
 }

@@ -18,11 +18,36 @@ namespace DD.Crm.SolutionManager.Utilities
     public static class CrmProvider
     {
 
+
+
+
+
+
+
+        public static List<Solution> GetSolutionsWhereComponentIs(IOrganizationService service, Guid componentId)
+        {
+            QueryExpression qe = new QueryExpression(SolutionComponentBase.EntityLogicalName);
+            FilterExpression fe = new FilterExpression();
+            fe.AddCondition(SolutionComponentBase.AttributeDefinitions.ObjectId, ConditionOperator.Equal, componentId);
+            qe.Criteria = fe;
+            qe.ColumnSet = new ColumnSet(true);
+            var solutionList = service.RetrieveMultiple(qe)
+                                 .Entities;
+
+            List<Guid> solutionIds = new List<Guid>();
+            foreach (var item in solutionList)
+            {
+                var idRef = item.GetAttributeValue<EntityReference>("solutionid");
+                var id = idRef.Id;
+            }
+            return GetSolutions(service, solutionIds);
+        }
+
         public static Solution CreateSolution(
-            IOrganizationService service, 
-            string name, 
-            string uniqueName, 
-            EntityReference publisher, 
+            IOrganizationService service,
+            string name,
+            string uniqueName,
+            EntityReference publisher,
             string description)
         {
             Entity e = new Entity(Solution.EntityLogicalName);
@@ -45,8 +70,8 @@ namespace DD.Crm.SolutionManager.Utilities
             AddComponentToSolution(service, solution.UniqueName, component);
         }
         public static void AddComponentToSolution(
-            IOrganizationService service, 
-            string solutionUniqueName, 
+            IOrganizationService service,
+            string solutionUniqueName,
             SolutionComponentBase component)
         {
             AddSolutionComponentRequest addReq = new AddSolutionComponentRequest()
@@ -66,6 +91,20 @@ namespace DD.Crm.SolutionManager.Utilities
 
             service.Execute(addReq);
         }
+
+
+        public static List<WorkSolution> GetAllOpenWorkSolutions(IOrganizationService service)
+        {
+            QueryByAttribute qe = new QueryByAttribute(WorkSolution.EntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            qe.AddAttributeValue(WorkSolution.AttributeDefinitions.Status, (int)WorkSolution.WorkSolutionStatus.Development);
+            var entities = service.RetrieveMultiple(qe)
+                    .Entities;
+            return entities
+                    .Select(k => { return k.ToWorkSolution(); })
+                    .ToList();
+        }
+
         public static List<WorkSolution> GetWorkSolutions(IOrganizationService service, Guid agregatedSolutionId)
         {
             var qe = new QueryExpression()
@@ -195,6 +234,22 @@ namespace DD.Crm.SolutionManager.Utilities
                     .ToList();
         }
 
+        public static List<Solution> GetSolutions(IOrganizationService service, List<Guid> solutionsId)
+        {
+            QueryExpression qe = new QueryExpression(Solution.EntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            FilterExpression fe = new FilterExpression(LogicalOperator.Or);
+            foreach (var id in solutionsId)
+            {
+                fe.AddCondition(Solution.AttributeDefinitions.Id, ConditionOperator.Equal, id);
+            }
+            qe.Criteria = fe;
+            return service.RetrieveMultiple(qe)
+                    .Entities
+                    .Select(k => { return k.ToSolution(); })
+                    .ToList();
+        }
+
 
         public static List<SolutionComponentBase> GetSolutionComponents(IOrganizationService service, Guid solutionId, bool expandDefinition = false)
         {
@@ -219,14 +274,23 @@ namespace DD.Crm.SolutionManager.Utilities
             }
             if (expandDefinition)
             {
-                items
-                    .OrderBy(k => k.GetOrderWeight())
-                    .ToList()
-                    .ForEach(k => { k.ObjectDefinition = RetrieveObjectDefinition(service, k); });
+                //items
+                //    .OrderBy(k => k.GetOrderWeight())
+                //    .ToList()
+                //    .ForEach(k => { k.ObjectDefinition = RetrieveObjectDefinition(service, k); });
+                UpdateComponentsDefinition(service, items);
             }
             return items;
         }
 
+
+        public static void UpdateComponentsDefinition(IOrganizationService service, List<SolutionComponentBase> components)
+        {
+            components
+                .OrderBy(k => k.GetOrderWeight())
+                .ToList()
+                .ForEach(k => { k.ObjectDefinition = RetrieveObjectDefinition(service, k); });
+        }
 
         public static object RetrieveObjectDefinition(IOrganizationService service, SolutionComponentBase component)
         {

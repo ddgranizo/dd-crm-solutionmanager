@@ -1,4 +1,5 @@
 ﻿using DD.Crm.SolutionManager.Models;
+using DD.Crm.SolutionManager.Models.Data;
 using DD.Crm.SolutionManager.Utilities;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Tooling.Connector;
@@ -14,7 +15,7 @@ namespace DD.Crm.SolutionManager
     {
 
         private readonly IOrganizationService _service;
-
+        public bool ExpandDefinition { get; set; } = true;
         public SolutionManager(string strConnection)
         {
             this._service = CrmProvider.GetService(strConnection);
@@ -23,6 +24,65 @@ namespace DD.Crm.SolutionManager
         public SolutionManager(IOrganizationService service)
         {
             this._service = service;
+        }
+
+
+
+        public List<Solution> GetSolutionWhereComponentIs(Guid objectId)
+        {
+            return CrmProvider.GetSolutionsWhereComponentIs(_service, objectId);
+        }
+
+
+        public void CheckAggregatedSolution(AggregatedSolution aggregatedSolution)
+        {
+            var workSolutions = GetWorkSolutions(aggregatedSolution);
+            var openWorkSolutions = workSolutions.Where(k => k.Status != WorkSolution.WorkSolutionStatus.ReadyToInt);
+            if (openWorkSolutions.ToList().Count > 0)
+            {
+                var openSolutions = string.Join(", ", openWorkSolutions.Select(k => { return k.Name; }).ToList());
+                throw new Exception($"Selected aggregated solution contains open work solutions:\r\n{openSolutions}");
+            }
+
+            StringBuilder st = new StringBuilder();
+            st.AppendLine();
+            bool foundOne = false;
+            var allOpenSolutions = GetAllOpenWorkSolutions();
+            var allOpenComponents = GetMergedSolutionComponents(allOpenSolutions);
+
+            foreach (var workSolution in workSolutions)
+            {
+                List<WorkSolution> w = new List<WorkSolution>() { workSolution };
+                var workComponents = GetMergedSolutionComponents(w);
+
+                List<MergedInSolutionComponent> blockedComponents = new List<MergedInSolutionComponent>();
+                foreach (var component in allOpenComponents)
+                {
+                    var foundSameComponentInOpen = allOpenComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
+                    if (foundSameComponentInOpen != null)
+                    {
+                        blockedComponents.Add(foundSameComponentInOpen);
+                    }
+                }
+                if (blockedComponents.Count > 0)
+                {
+                    foundOne = true;
+                    st.AppendLine($"- WorkSolution: {workSolution.Name}");
+                    StringBuilder foundComponents = new StringBuilder();
+
+                    CrmProvider.UpdateComponentsDefinition(_service, blockedComponents.Cast<SolutionComponentBase>().ToList());
+                    foreach (var component in blockedComponents)
+                    {
+                        var def = ((BaseEntity)component.ObjectDefinition);
+                        foundComponents.AppendLine($"\t- {def.DisplayName} of type {component.TypeString}");
+                    }
+                    st.AppendLine(foundComponents.ToString());
+                }
+            }
+            if (foundOne)
+            {
+                throw new Exception($"Next component have been used in other open work solutions and cannot be added to the general solution: {st.ToString()}");
+            }
         }
 
         public Solution CreateSolution(string name, string uniqueName, EntityReference pubisher, string description)
@@ -76,6 +136,11 @@ namespace DD.Crm.SolutionManager
         }
 
 
+        public List<WorkSolution> GetAllOpenWorkSolutions()
+        {
+            return CrmProvider.GetAllOpenWorkSolutions(this._service);
+        }
+
         public List<AggregatedSolution> GetAggregatedSolutions()
         {
             return CrmProvider.GetAgregatedSolutions(this._service);
@@ -83,8 +148,11 @@ namespace DD.Crm.SolutionManager
 
         public List<SolutionComponentBase> GetSolutionComponents(Guid solutionId, bool expandDefinition = false)
         {
-            return CrmProvider.GetSolutionComponents(this._service, solutionId, expandDefinition);
+            bool expand = !ExpandDefinition ? ExpandDefinition : expandDefinition;
+            return CrmProvider.GetSolutionComponents(this._service, solutionId, expand);
         }
+
+
 
         public List<SolutionComponentBase> GetSolutionsComponents(List<Solution> solutions, bool expandDefinition = false)
         {
@@ -116,6 +184,11 @@ namespace DD.Crm.SolutionManager
             return GetMergedSolutionComponents(GetSolutionsComponents(solutions, expandDefinition));
         }
 
+        public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<WorkSolution> workSolutions, bool expandDefinition = false)
+        {
+            var listSolutionsIds = workSolutions.Select(k => { return k.SolutionId; }).ToList();
+            return GetMergedSolutionComponents(listSolutionsIds, expandDefinition);
+        }
 
         public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<SolutionComponentBase> components)
         {
@@ -128,39 +201,35 @@ namespace DD.Crm.SolutionManager
                 AddSolutionComponentToMergedSolution(item, list);
             }
 
-
             return list;
         }
 
-
-        private List<MergedInSolutionComponent> GetMergedChildComponents(
-            MergedInSolutionComponent component,
-            List<MergedInSolutionComponent> mergedComponents)
-        {
-
-            return mergedComponents
-                .Where(k => k.IsChild)
-                .Where(k => k.ParentSolutionComponent.ObjectId == component.ObjectId)
-                .ToList();
-        }
 
         private void AddSolutionComponentToMergedSolution(
             SolutionComponentBase component,
             List<MergedInSolutionComponent> mergedComponents)
         {
             MergedInSolutionComponent newItem = new MergedInSolutionComponent(component);
-            var reasonWhyIsNotIn = GetReasonWhyIsNotIn(component, mergedComponents);
-            newItem.IsIn = reasonWhyIsNotIn == null;
-            newItem.RemovedByComponent = reasonWhyIsNotIn;
-            if (!newItem.IsIn)
+            MergedInSolutionComponent reasonWhyIsNotIn = null;
+            newItem.IsIn = true;
+            if (newItem.IsChild && newItem.ParentSolutionComponent == null)
             {
+                newItem.ReasonWhyIsNot = MergedInSolutionComponent.ReasonWhyIsNotType.ParentIsNot;
+                newItem.IsIn = false;
+            }
+            else
+            {
+                reasonWhyIsNotIn = GetReasonWhyIsNotIn(component, mergedComponents);
+            }
+            if (reasonWhyIsNotIn != null)
+            {
+                newItem.IsIn = false;
+                newItem.RemovedByComponent = reasonWhyIsNotIn;
+                newItem.ReasonWhyIsNot = MergedInSolutionComponent.ReasonWhyIsNotType.OverComponent;
                 reasonWhyIsNotIn.HasRemovedComponents.Add(newItem);
             }
             mergedComponents.Add(newItem);
         }
-
-
-
 
 
         private MergedInSolutionComponent GetReasonWhyIsNotIn(
@@ -200,43 +269,7 @@ namespace DD.Crm.SolutionManager
             return null;
         }
 
-        //private bool IsIn(
-        //    SolutionComponentBase component,
-        //    List<MergedInSolutionComponent> mergedComponents)
-        //{
-        //    if (component.Type == SolutionComponentBase.SolutionComponentType.Entity
-        //        && component.RootComponentBehavior != null)
-        //    {
-        //        MergedInSolutionComponent sameObjectId =
-        //            mergedComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
-        //        if (sameObjectId == null)
-        //        {
-        //            return true;
-        //        }
-        //        return component.RootComponentBehavior.Value < sameObjectId.RootComponentBehavior.Value;
-        //    }
-        //    else if (component.IsChildComponent())
-        //    {
-        //        MergedInSolutionComponent sameObjectId =
-        //            mergedComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
-        //        if (sameObjectId == null)
-        //        {
-        //            var parentComponent =
-        //                mergedComponents
-        //                    .FirstOrDefault(k => k.Id == component.ParentSolutionComponent?.Id);
-        //            if (parentComponent != null)
-        //            {
-        //                return parentComponent.IsIn;
-        //            }
-        //            return true;
-        //        }
-        //        return false;
-        //    }
-        //    return true;
-        //}
-
-
-
+       
 
     }
 }

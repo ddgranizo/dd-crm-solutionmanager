@@ -1,5 +1,6 @@
 ﻿using DD.Crm.SolutionManager;
 using DD.Crm.SolutionManager.Models;
+using DD.Crm.SolutionManager.Models.Data;
 using Microsoft.Xrm.Sdk;
 using SolutionManagerUI.Commands;
 using SolutionManagerUI.Models;
@@ -549,6 +550,7 @@ namespace SolutionManagerUI.ViewModels
                 if (_service != null)
                 {
                     CurrentSolutionManager = new SolutionManager(_service);
+                    CurrentSolutionManager.ExpandDefinition = GetDefaultExpandMode();
                 }
                 RaiseCanExecuteChanged();
             }
@@ -625,6 +627,18 @@ namespace SolutionManagerUI.ViewModels
                 }
                 RaiseCanExecuteChanged();
             }
+        }
+
+
+        private const string ExpandModeSettingKeyName = "EXPAND_MODE";
+        private bool GetDefaultExpandMode()
+        {
+            var settingValue = SettingsManager.GetSetting<string>(this.Settings, ExpandModeSettingKeyName, "true");
+            if (!bool.TryParse(settingValue, out bool value))
+            {
+                return true;
+            }
+            return value;
         }
 
         private void SetNewOrganizationService()
@@ -708,10 +722,10 @@ namespace SolutionManagerUI.ViewModels
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    SelectedSolution = selectSolution;
+                    SelectedSolution = Solutions.FirstOrDefault(k => k.Id == selectSolution.Id);
                 });
-            }, "Retrieving solutions...", _selectSolutionAsyncTaskId, 1000);
-            
+            }, "Retrieving solutions...", _selectSolutionAsyncTaskId, 500);
+
         }
 
         private Guid _retrieveSolutionComponentsTaskId = Guid.NewGuid();
@@ -725,13 +739,19 @@ namespace SolutionManagerUI.ViewModels
                 var errorMessage = string.Empty;
                 try
                 {
+                    if (IsAggregatedWorkSolutionMode)
+                    {
+                        solutionComponents =
+                            CurrentSolutionManager
+                            .GetMergedSolutionComponents(SelectedWorkSolutions, true);
+                    }
+                    else
+                    {
+                        solutionComponents =
+                            CurrentSolutionManager
+                            .GetMergedSolutionComponents(SelectedSolutions, true);
+                    }
 
-                    var solutionIds = IsAggregatedWorkSolutionMode
-                        ? SelectedWorkSolutions.Select(k => { return k.SolutionId; }).ToList()
-                        : SelectedSolutions.Select(k => { return k.Id; }).ToList();
-                    solutionComponents =
-                        CurrentSolutionManager
-                        .GetMergedSolutionComponents(solutionIds, true);
                 }
                 catch (Exception ex)
                 {
@@ -851,7 +871,117 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("DoMergeCommand", DoMergeCommand);
 
+            Commands.Add("MergeAggregatedSolutionsCommand", MergeAggregatedSolutionsCommand);
+            Commands.Add("CheckAggregatedSolutionsCommand", CheckAggregatedSolutionsCommand);
+
+            Commands.Add("FindLayersWhereComponentIs", FindLayersWhereComponentIs);
+
         }
+
+
+
+        private ICommand _findLayersWhereComponentIs = null;
+        public ICommand FindLayersWhereComponentIs
+        {
+            get
+            {
+                if (_findLayersWhereComponentIs == null)
+                {
+                    _findLayersWhereComponentIs = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var solutions = CurrentSolutionManager.GetSolutionWhereComponentIs(SelectedSolutionComponent.ObjectId);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null
+                                    && SelectedSolutionComponent != null;
+
+                    });
+                }
+                return _findLayersWhereComponentIs;
+            }
+        }
+
+
+        private ICommand _checkAggregatedSolutionsCommand = null;
+        public ICommand CheckAggregatedSolutionsCommand
+        {
+            get
+            {
+                if (_checkAggregatedSolutionsCommand == null)
+                {
+                    _checkAggregatedSolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _checkAggregatedSolutionsCommand;
+            }
+        }
+
+
+        private ICommand _mergeAggregatedSolutionsCommand = null;
+        public ICommand MergeAggregatedSolutionsCommand
+        {
+            get
+            {
+                if (_mergeAggregatedSolutionsCommand == null)
+                {
+                    _mergeAggregatedSolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var settings = AppDataManager.LoadSettings();
+                            MergeSolutionsManager mergeManager =
+                                new MergeSolutionsManager(
+                                    Service,
+                                    CurrentCrmConnection,
+                                    CurrentSolutionManager,
+                                    settings,
+                                    null,
+                                    null,
+                                    null,
+                                    SelectedAggregatedSolution);
+                            mergeManager.ShowDialog();
+
+                            if (IsSolutionMode)
+                            {
+                                SolutionFilter = null;
+                                var solutionCreated = mergeManager.GetViewModel().MergedSolution;
+                                ReloadSolutions(solutionCreated);
+                            }
+
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _mergeAggregatedSolutionsCommand;
+            }
+        }
+
 
 
         private ICommand _doMergeCommand = null;
@@ -865,19 +995,23 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
+                            var settings = AppDataManager.LoadSettings();
+
                             var solutionItemsForMerge =
                                 SolutionComponents
                                     .Where(k => k.IsIn)
-                                    .OrderBy(k=>k.GetOrderWeight())
+                                    .OrderBy(k => k.GetOrderWeight())
                                     .ToList();
-                            MergeManager mergeManager = 
-                                new MergeManager(
-                                    Service, 
-                                    CurrentCrmConnection, 
-                                    CurrentSolutionManager, 
+                            MergeSolutionsManager mergeManager =
+                                new MergeSolutionsManager(
+                                    Service,
+                                    CurrentCrmConnection,
+                                    CurrentSolutionManager,
+                                    settings,
                                     SelectedSolutions,
-                                    Solutions, 
-                                    solutionItemsForMerge);
+                                    Solutions,
+                                    solutionItemsForMerge,
+                                    null);
                             mergeManager.ShowDialog();
                             SolutionFilter = null;
                             var solutionCreated = mergeManager.GetViewModel().MergedSolution;
@@ -1105,6 +1239,8 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
+
+
         private ICommand _findReasonWhyComponentIsNotInCommand = null;
         public ICommand FindReasonWhyComponentIsNotInCommand
         {
@@ -1116,7 +1252,16 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            SelectedSolutionComponent = SelectedSolutionComponent.RemovedByComponent;
+                            if (SelectedSolutionComponent.ReasonWhyIsNot == MergedInSolutionComponent.ReasonWhyIsNotType.OverComponent)
+                            {
+                                SelectedSolutionComponent = SelectedSolutionComponent.RemovedByComponent;
+                            }
+                            else if (SelectedSolutionComponent.ReasonWhyIsNot == MergedInSolutionComponent.ReasonWhyIsNotType.ParentIsNot)
+                            {
+                                var objectTypeCode = ((BaseEntity)SelectedSolutionComponent.ObjectDefinition).ObjectTypeCode;
+                                MessageBox.Show($"The parent entity '{objectTypeCode}' of this item is not in the solution or is including all subcomponents", "Reason why is not in", MessageBoxButton.OK, MessageBoxImage.Information);
+                            }
+
                         }
                         catch (Exception ex)
                         {
@@ -1263,6 +1408,10 @@ namespace SolutionManagerUI.ViewModels
                             SettingManager manager = new SettingManager(Settings);
                             manager.ShowDialog();
                             AppDataManager.SaveSettings(Settings);
+                            if (CurrentSolutionManager != null)
+                            {
+                                CurrentSolutionManager.ExpandDefinition = GetDefaultExpandMode();
+                            }
                         }
                         catch (Exception ex)
                         {

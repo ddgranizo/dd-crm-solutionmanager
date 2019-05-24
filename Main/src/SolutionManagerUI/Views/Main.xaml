@@ -35,6 +35,7 @@
             <conv:ComponentBehaviorIncludeAllToVisibilityConverter x:Key="ComponentBehaviorIncludeAllToVisibilityConverter" />
             <conv:ComponentBehaviorIncludeMetadataToVisibilityConverter x:Key="ComponentBehaviorIncludeMetadataToVisibilityConverter" />
             <conv:IsComponentEntityToVisibilityConverter x:Key="IsComponentEntityToVisibilityConverter" />
+            <conv:WorkSolutionStatusToBackgroundConverter x:Key="WorkSolutionStatusToBackgroundConverter" />
         </Grid.Resources>
 
         <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
@@ -133,6 +134,13 @@
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="5">
+                                                <Grid.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Check work solutions" Command="{Binding Source={StaticResource viewModel}, Path=CheckAggregatedSolutionsCommand, Mode=OneWay}" />
+                                                        <Separator />
+                                                        <MenuItem Header="Create solution from aggregated" Command="{Binding Source={StaticResource viewModel}, Path=MergeAggregatedSolutionsCommand, Mode=OneWay}" />
+                                                    </ContextMenu>
+                                                </Grid.ContextMenu>
                                                 <TextBlock Text="{Binding Name}"></TextBlock>
                                             </Grid>
                                         </DataTemplate>
@@ -182,9 +190,6 @@
                                 </Button>
                             </Grid>
                             
-                            
-                            
-                            
 
                             <ScrollViewer  x:Name="WorkSolutionsListScrollViewer" Grid.Row="2" Visibility="{Binding IsAggregatedWorkSolutionMode, Converter={StaticResource BoolToCollapseConverter}}">
                                 <ListView x:Name="WorkSolutionsList"  
@@ -197,8 +202,15 @@
                                           >
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Margin="5">
-                                                <TextBlock Text="{Binding Name}"></TextBlock>
+                                            <Grid Margin="5" >
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Label Width="100" Grid.Column="0"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource WorkSolutionStatusToBackgroundConverter}}" >
+                                                    <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
+                                                </Label>
+                                                <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="1"></TextBlock>
                                             </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
@@ -241,7 +253,7 @@
                                           SelectedItem="{Binding SelectedSolution}">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
-                                            <Grid Margin="5">
+                                            <Grid Margin="5" >
                                                 <TextBlock Text="{Binding DisplayName}"></TextBlock>
                                             </Grid>
                                         </DataTemplate>
@@ -313,7 +325,17 @@
                                           SelectionChanged="SolutionComponentsList_SelectionChanged">
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
-                                            <custom:SolutionComponent Component="{Binding}"></custom:SolutionComponent>
+                                            <Grid>
+                                                <Grid.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Find why is not in"  Command="{Binding Source={StaticResource viewModel}, Path=FindReasonWhyComponentIsNotInCommand, Mode=OneWay}" />
+                                                        <Separator></Separator>
+                                                        <MenuItem Header="Find layers where component is"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
+                                                    </ContextMenu>
+                                                </Grid.ContextMenu>
+                                                <custom:SolutionComponent Component="{Binding}"></custom:SolutionComponent>
+                                            </Grid>
+                                            
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                     <ListView.ItemContainerStyle>

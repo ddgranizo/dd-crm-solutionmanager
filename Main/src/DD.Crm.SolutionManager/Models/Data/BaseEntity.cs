@@ -11,6 +11,7 @@ namespace DD.Crm.SolutionManager.Models.Data
         public string Name { get; set; }
         public string DisplayName { get; set; }
         public string EntityLogicalName { get; set; }
+        public string ObjectTypeCode { get; set; }
         public Guid Id { get; set; }
         public BaseEntity(Guid id)
         {

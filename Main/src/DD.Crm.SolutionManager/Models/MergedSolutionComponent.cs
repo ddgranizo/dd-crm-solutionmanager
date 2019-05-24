@@ -6,14 +6,24 @@ using System.Threading.Tasks;
 
 namespace DD.Crm.SolutionManager.Models
 {
+
+
+
     public class MergedInSolutionComponent : SolutionComponentBase
     {
+        public enum ReasonWhyIsNotType
+        {
+            OverComponent = 1,
+            ParentIsNot = 2,
+        }
         public bool IsIn { get; set; }
 
         public MergedInSolutionComponent RemovedByComponent { get; set; }
         public List<MergedInSolutionComponent> HasRemovedComponents { get; set; }
 
         public List<MergedInSolutionComponent> ChildMergedComponents { get; set; }
+
+        public ReasonWhyIsNotType ReasonWhyIsNot { get; set; }
 
         public MergedInSolutionComponent(SolutionComponentBase solutionComponentBase)
             : base()

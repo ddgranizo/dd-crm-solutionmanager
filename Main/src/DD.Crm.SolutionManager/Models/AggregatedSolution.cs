@@ -23,9 +23,9 @@ namespace DD.Crm.SolutionManager.Models
         public enum AggregatedSolutionType
         {
             Sprint = 0,
-            Midnight = 1,
-            Lighting = 2,
-           
+            MidnightExpress = 1,
+            SilverBullet = 2,
+            Mantenance = 3,
         }
 
         public struct AttributeDefinitions

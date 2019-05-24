@@ -37,6 +37,7 @@ namespace DD.Crm.SolutionManager.Models
         public Guid Id { get; set; }
         public WorkSolutionStatus Status { get; set; }
 
+        public string StatusString { get { return Status.ToString(); } }
         public string Name { get; set; }
 
         public string Jira { get; set; }
