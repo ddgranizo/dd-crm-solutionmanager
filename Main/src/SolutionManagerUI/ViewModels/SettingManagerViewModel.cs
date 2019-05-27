@@ -22,8 +22,6 @@ namespace SolutionManagerUI.ViewModels
 
 
 
-
-
         private readonly ObservableCollection<Setting> _settingsCollection = new ObservableCollection<Setting>();
         public ObservableCollection<Setting> SettingsCollection { get { return _settingsCollection; } }
 

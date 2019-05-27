@@ -122,7 +122,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _newDisplayName = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewDisplayName"));
-                UniqueName = RemoveDiacritics(value);
+                UniqueName = StringFormatter.FormatString(value);
                 RaiseCanExecuteChanged();
             }
         }
@@ -402,7 +402,7 @@ namespace SolutionManagerUI.ViewModels
             ReloadSolutionComponentFromAggregatedSolution(aggregatedSolution);
 
 
-            var uniqueName = RemoveDiacritics(aggregatedSolution.Name);
+            var uniqueName = StringFormatter.FormatString(aggregatedSolution.Name);
             this.NewDisplayName = string.Format(aggregatedSolutionName, aggregatedSolution.Type.ToString(), uniqueName);
             this.UniqueName = NewDisplayName;
 
@@ -609,31 +609,6 @@ namespace SolutionManagerUI.ViewModels
             return $"{composedUrl}tools/solution/edit.aspx?id={solution.Id}";
         }
 
-
-        private static string RemoveDiacritics(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return string.Empty;
-            }
-            var normalizedString = text.Normalize(NormalizationForm.FormD);
-            var stringBuilder = new StringBuilder();
-
-            foreach (var c in normalizedString)
-            {
-                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
-
-                if (unicodeCategory == UnicodeCategory.DecimalDigitNumber
-                    || unicodeCategory == UnicodeCategory.LowercaseLetter
-                    || unicodeCategory == UnicodeCategory.UppercaseLetter
-                    || c == '_')
-                {
-                    stringBuilder.Append(c);
-                }
-            }
-
-            return stringBuilder.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
-        }
 
 
         private void SetDialog(string message)

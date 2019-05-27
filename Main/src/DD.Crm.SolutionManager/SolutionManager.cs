@@ -26,7 +26,41 @@ namespace DD.Crm.SolutionManager
             this._service = service;
         }
 
+        public void IncreaseSolutionRevisionVersion(Guid solutionId)
+        {
+            var solution = CrmProvider.GetSolution(_service, solutionId);
+            var version = solution.Version;
+            var versioned = new Version(version);
+            var newVersion = new Version(versioned.Major, versioned.Minor, versioned.Build, versioned.Revision + 1);
+            CrmProvider.UpdateSolutionVersion(_service, solutionId, newVersion.ToString());
+        }
 
+        public void CleanSolution(Guid solutionId)
+        {
+            var solution = CrmProvider.GetSolution(_service, solutionId);
+            CrmProvider.CleanSolution(_service, solution.UniqueName);
+        }
+
+
+        public void RemoveSolution(Guid solutionId)
+        {
+            CrmProvider.RemoveSolution(_service, solutionId);
+        }
+
+        public void RemoveSolution(string uniqueName)
+        {
+            var solution = GetSolution(uniqueName);
+            if (solution != null)
+            {
+                CrmProvider.RemoveSolution(_service, solution.Id);
+            }
+
+        }
+
+        public Guid CloneSolution(Guid solutionId, string newName = null, string newUniqueName = null, string version = null, string description = null)
+        {
+            return CrmProvider.CloneSolution(_service, solutionId, newName, newUniqueName, version, description);
+        }
 
         public List<Solution> GetSolutionWhereComponentIs(Guid objectId)
         {
@@ -87,7 +121,7 @@ namespace DD.Crm.SolutionManager
 
         public Solution CreateSolution(string name, string uniqueName, EntityReference pubisher, string description)
         {
-            return CrmProvider.CreateSolution(_service, name, uniqueName, pubisher, description);
+            return CrmProvider.CreateSolution(_service, name, uniqueName, pubisher, null, description);
         }
 
         public void CreateMergedSolution(Guid solutionId, List<MergedInSolutionComponent> components)
@@ -108,6 +142,12 @@ namespace DD.Crm.SolutionManager
             return CrmProvider.GetSolutions(this._service);
         }
 
+
+        public Solution GetSolution(string uniqueName)
+        {
+            return CrmProvider.GetSolution(this._service, uniqueName);
+        }
+
         public List<WorkSolution> GetWorkSolutions(List<AggregatedSolution> aggregatedSolutions)
         {
             return GetWorkSolutions(aggregatedSolutions.Select(k => { return k.Id; }).ToList());
@@ -124,7 +164,6 @@ namespace DD.Crm.SolutionManager
             return solutions;
         }
 
-
         public List<WorkSolution> GetWorkSolutions(AggregatedSolution aggregatedSolution)
         {
             return GetWorkSolutions(aggregatedSolution.Id);
@@ -134,7 +173,6 @@ namespace DD.Crm.SolutionManager
         {
             return CrmProvider.GetWorkSolutions(this._service, aggregatedSolutionId);
         }
-
 
         public List<WorkSolution> GetAllOpenWorkSolutions()
         {
@@ -151,8 +189,6 @@ namespace DD.Crm.SolutionManager
             bool expand = !ExpandDefinition ? ExpandDefinition : expandDefinition;
             return CrmProvider.GetSolutionComponents(this._service, solutionId, expand);
         }
-
-
 
         public List<SolutionComponentBase> GetSolutionsComponents(List<Solution> solutions, bool expandDefinition = false)
         {
@@ -172,6 +208,13 @@ namespace DD.Crm.SolutionManager
                 list.AddRange(GetSolutionComponents(id, expandDefinition));
             }
             return list;
+        }
+
+        public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<Guid> solutionIds, List<MergedInSolutionComponent> components, bool expandDefinition = false)
+        {
+            var componentsFromSolutions = GetSolutionsComponents(solutionIds, expandDefinition);
+            componentsFromSolutions.AddRange(components);
+            return GetMergedSolutionComponents(componentsFromSolutions);
         }
 
         public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<Guid> solutionIds, bool expandDefinition = false)
@@ -269,7 +312,7 @@ namespace DD.Crm.SolutionManager
             return null;
         }
 
-       
+
 
     }
 }

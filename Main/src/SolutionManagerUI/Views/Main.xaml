@@ -24,7 +24,7 @@
         Title="SolutionManagerUI" Height="450" Width="800">
 
 
-   
+
     <Grid x:Name="LayoutRoot"  Background="White" >
         <Grid.Resources>
             <vm:MainViewModel x:Key="viewModel" d:IsDataSource="True"></vm:MainViewModel>
@@ -36,6 +36,8 @@
             <conv:ComponentBehaviorIncludeMetadataToVisibilityConverter x:Key="ComponentBehaviorIncludeMetadataToVisibilityConverter" />
             <conv:IsComponentEntityToVisibilityConverter x:Key="IsComponentEntityToVisibilityConverter" />
             <conv:WorkSolutionStatusToBackgroundConverter x:Key="WorkSolutionStatusToBackgroundConverter" />
+            <conv:IndexConverter x:Key="IndexConverter" />
+            <conv:IsManagedToFontColorConverter x:Key="IsManagedToFontColorConverter" />
         </Grid.Resources>
 
         <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
@@ -112,7 +114,7 @@
                                 <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadAggregatedSolutionsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
                                 </Button>
-                                
+
                                 <Label Grid.Column="2" VerticalAlignment="Center">Filter:</Label>
                                 <TextBox Grid.Column="3" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                                 <!--<Button Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Select solution(s)" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
@@ -134,6 +136,13 @@
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="5">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+                                                <TextBlock Grid.Column="1" Text="{Binding Name}"></TextBlock>
+                                                
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Check work solutions" Command="{Binding Source={StaticResource viewModel}, Path=CheckAggregatedSolutionsCommand, Mode=OneWay}" />
@@ -141,7 +150,6 @@
                                                         <MenuItem Header="Create solution from aggregated" Command="{Binding Source={StaticResource viewModel}, Path=MergeAggregatedSolutionsCommand, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
-                                                <TextBlock Text="{Binding Name}"></TextBlock>
                                             </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
@@ -150,6 +158,21 @@
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         </Style>
                                     </ListView.ItemContainerStyle>
+                                    <ListView.Style>
+                                        <Style TargetType="ListView">
+                                            <Style.Triggers>
+                                                <Trigger Property="HasItems" Value="False">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListView">
+                                                                <TextBlock Text="No items..."/>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.Style>
                                 </ListView>
                             </ScrollViewer>
                         </Grid>
@@ -182,14 +205,14 @@
                                 <Button Grid.Column="1"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Mark/Unmark all" Command="{Binding Source={StaticResource viewModel}, Path=MarkUnmarkAllWorkSolutionsCommand, Mode=OneWay}" >
                                     <materialDesign:PackIcon Kind="ArrowExpandAll" Width="15" Height="15"/>
                                 </Button>
-                             
+
                                 <Label Grid.Column="3" VerticalAlignment="Center">Filter:</Label>
                                 <TextBox Grid.Column="4" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                                 <Button Grid.Column="5" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="ArrowCollapseRight" Width="15" Height="15"/>
                                 </Button>
                             </Grid>
-                            
+
 
                             <ScrollViewer  x:Name="WorkSolutionsListScrollViewer" Grid.Row="2" Visibility="{Binding IsAggregatedWorkSolutionMode, Converter={StaticResource BoolToCollapseConverter}}">
                                 <ListView x:Name="WorkSolutionsList"  
@@ -204,13 +227,16 @@
                                         <DataTemplate>
                                             <Grid Margin="5" >
                                                 <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="100"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
-                                                <Label Width="100" Grid.Column="0"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource WorkSolutionStatusToBackgroundConverter}}" >
+                                                <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+                                                
+                                                <Label Width="100" Grid.Column="1"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource WorkSolutionStatusToBackgroundConverter}}" >
                                                     <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
                                                 </Label>
-                                                <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="1"></TextBlock>
+                                                <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="2"></TextBlock>
                                             </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
@@ -219,6 +245,21 @@
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         </Style>
                                     </ListView.ItemContainerStyle>
+                                    <ListView.Style>
+                                        <Style TargetType="ListView">
+                                            <Style.Triggers>
+                                                <Trigger Property="HasItems" Value="False">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListView">
+                                                                <TextBlock Text="No items..."/>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.Style>
                                 </ListView>
                             </ScrollViewer>
 
@@ -234,7 +275,7 @@
                                 <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
                                 </Button>
-                                
+
                                 <Label Grid.Column="2" VerticalAlignment="Center">Filter:</Label>
                                 <TextBox Grid.Column="3" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                                 <Button Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
@@ -254,8 +295,21 @@
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="5" >
-                                                <TextBlock Text="{Binding DisplayName}"></TextBlock>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock  Grid.Column="0"  Text="{Binding  StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+                                                <TextBlock Foreground="{Binding IsManaged, Converter={StaticResource IsManagedToFontColorConverter}}"  Grid.Column="1" Text="{Binding DisplayName}"></TextBlock>
+                                                <TextBlock  Grid.Column="2" Margin="5,0,0,0" Text="{Binding Version, StringFormat='({0})'}" ></TextBlock>
+                                                <Grid.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Clone solution" Command="{Binding Source={StaticResource viewModel}, Path=CloneSolutionCommand, Mode=OneWay}" />
+                                                    </ContextMenu>
+                                                </Grid.ContextMenu>
                                             </Grid>
+
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                     <ListView.ItemContainerStyle>
@@ -263,7 +317,23 @@
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         </Style>
                                     </ListView.ItemContainerStyle>
+                                    <ListView.Style>
+                                        <Style TargetType="ListView">
+                                            <Style.Triggers>
+                                                <Trigger Property="HasItems" Value="False">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListView">
+                                                                <TextBlock Text="No items..."/>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.Style>
                                 </ListView>
+
                             </ScrollViewer>
                         </Grid>
                     </GroupBox>
@@ -294,6 +364,7 @@
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                                     <Label>Show merged</Label>
@@ -301,19 +372,22 @@
                                     <!--<Label>Tree</Label>
                                     <ToggleButton IsChecked="{Binding ShowInTree}"></ToggleButton>-->
                                 </StackPanel>
-                                
+
                                 <!--<Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solution components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}">
                                     <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
                                 </Button>-->
                                 <!--<Label Grid.Column="1" VerticalAlignment="Center">Filter:</Label>
                                 <TextBox Grid.Column="2" VerticalAlignment="Center" Text="{Binding SolutionComponentFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>-->
 
-                                <Button  Grid.Column="3" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Do Merge" Command="{Binding Source={StaticResource viewModel}, Path=DoMergeCommand, Mode=OneWay}" Visibility="{Binding IsSolutionMode, Converter={StaticResource BoolToCollapseConverter}}">
+                                <Button  Grid.Column="3" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Merge in solution" Command="{Binding Source={StaticResource viewModel}, Path=DoMergeCommand, Mode=OneWay}" Visibility="{Binding IsSolutionMode, Converter={StaticResource BoolToCollapseConverter}}">
                                     <materialDesign:PackIcon Kind="PotMix" Width="15" Height="15"/>
+                                </Button>
+                                <Button  Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Merge in supersolutions" Command="{Binding Source={StaticResource viewModel}, Path=DoMergeInSupersolutionsCommand, Mode=OneWay}" Visibility="{Binding IsSolutionMode, Converter={StaticResource BoolToCollapseConverter}}">
+                                    <materialDesign:PackIcon Kind="CallSplit" Width="15" Height="15"/>
                                 </Button>
                             </Grid>
                             <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Horizontal" Margin="5">
-                            
+
                             </StackPanel>
 
                             <ScrollViewer  x:Name="SolutionComponentsListScrollViewer" Grid.Row="2">
@@ -326,6 +400,12 @@
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+                                                <custom:SolutionComponent Grid.Column="1" Component="{Binding}"></custom:SolutionComponent>
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Find why is not in"  Command="{Binding Source={StaticResource viewModel}, Path=FindReasonWhyComponentIsNotInCommand, Mode=OneWay}" />
@@ -333,9 +413,9 @@
                                                         <MenuItem Header="Find layers where component is"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
-                                                <custom:SolutionComponent Component="{Binding}"></custom:SolutionComponent>
+                                                
                                             </Grid>
-                                            
+
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
                                     <ListView.ItemContainerStyle>
@@ -343,6 +423,21 @@
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                         </Style>
                                     </ListView.ItemContainerStyle>
+                                    <ListView.Style>
+                                        <Style TargetType="ListView">
+                                            <Style.Triggers>
+                                                <Trigger Property="HasItems" Value="False">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListView">
+                                                                <TextBlock Text="No items..."/>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.Style>
                                 </ListView>
                             </ScrollViewer>
                         </Grid>

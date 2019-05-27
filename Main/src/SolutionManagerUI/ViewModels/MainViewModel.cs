@@ -335,6 +335,12 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+        private void SetSolutionSubset(List<Solution> solutions)
+        {
+            SolutionFilter = null;
+            UpdateListToCollection(solutions, FilteredSolutionsCollection);
+        }
+
         private string _solutionComponentFilter = null;
         public string SolutionComponentFilter
         {
@@ -669,7 +675,7 @@ namespace SolutionManagerUI.ViewModels
                     string message = service != null
                         ? okMessage
                         : koMessage;
-                    UpdateDialogMessage(message, 2000);
+                    UpdateDialogMessage(message, 200);
                     this.Service = service;
                 });
             }, "Validating connection...", _getServiceTaskId);
@@ -677,7 +683,12 @@ namespace SolutionManagerUI.ViewModels
 
 
         private Guid _retrieveSolutionsTaskId = Guid.NewGuid();
-        private void ReloadSolutions(Solution selectSolution = null)
+        private void ReloadSolutions()
+        {
+            ReloadSolutions(Guid.Empty);
+        }
+
+        private void ReloadSolutions(Guid selectSolutionId)
         {
             IsRetrievingSolutions = true;
             SolutionComponents = new List<MergedInSolutionComponent>();
@@ -704,9 +715,9 @@ namespace SolutionManagerUI.ViewModels
                     else
                     {
                         this.Solutions = solutions;
-                        if (selectSolution != null)
+                        if (selectSolutionId != Guid.Empty)
                         {
-                            SelectSolutionAsync(selectSolution);
+                            SelectSolutionAsync(selectSolutionId);
                         }
                     }
                     IsRetrievingSolutions = false;
@@ -716,13 +727,13 @@ namespace SolutionManagerUI.ViewModels
 
 
         private Guid _selectSolutionAsyncTaskId = Guid.NewGuid();
-        private void SelectSolutionAsync(Solution selectSolution)
+        private void SelectSolutionAsync(Guid selectSolutionId)
         {
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    SelectedSolution = Solutions.FirstOrDefault(k => k.Id == selectSolution.Id);
+                    SelectedSolution = Solutions.FirstOrDefault(k => k.Id == selectSolutionId);
                 });
             }, "Retrieving solutions...", _selectSolutionAsyncTaskId, 500);
 
@@ -843,6 +854,9 @@ namespace SolutionManagerUI.ViewModels
 
         }
 
+
+     
+
         protected override void RegisterCommands()
         {
             Commands.Add("NewCommand", NewCommand);
@@ -876,8 +890,89 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("FindLayersWhereComponentIs", FindLayersWhereComponentIs);
 
+            Commands.Add("DoMergeInSupersolutionsCommand", DoMergeInSupersolutionsCommand);
+
+            Commands.Add("CloneSolutionCommand", CloneSolutionCommand);
+
         }
 
+
+
+        private ICommand _cloneSolutionCommand = null;
+        public ICommand CloneSolutionCommand
+        {
+            get
+            {
+                if (_cloneSolutionCommand == null)
+                {
+                    _cloneSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var settings = AppDataManager.LoadSettings();
+                            CloneSolutionManager cloneManager = new CloneSolutionManager(
+                                Service,
+                                CurrentCrmConnection,
+                                CurrentSolutionManager,
+                                settings,
+                                SelectedSolution);
+
+                            cloneManager.ShowDialog();
+
+                            SolutionFilter = null;
+                            var clonedSolutionId = cloneManager.GetViewModel().ClonedSolutionId;
+                            ReloadSolutions(clonedSolutionId);
+
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+                    });
+                }
+                return _cloneSolutionCommand;
+            }
+        }
+
+        private ICommand _doMergeInSupersolutionsCommand = null;
+        public ICommand DoMergeInSupersolutionsCommand
+        {
+            get
+            {
+                if (_doMergeInSupersolutionsCommand == null)
+                {
+                    _doMergeInSupersolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var settings = AppDataManager.LoadSettings();
+
+                            SuperSolutionsManager super = new SuperSolutionsManager(
+                                Service,
+                                CurrentCrmConnection,
+                                CurrentSolutionManager,
+                                settings,
+                                SolutionComponents
+                                    .Where(k => k.IsIn)
+                                    .ToList(),
+                                null);
+                            super.ShowDialog();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SolutionComponents != null && SolutionComponents.Count > 0;
+                    });
+                }
+                return _doMergeInSupersolutionsCommand;
+            }
+        }
 
 
         private ICommand _findLayersWhereComponentIs = null;
@@ -892,6 +987,7 @@ namespace SolutionManagerUI.ViewModels
                         try
                         {
                             var solutions = CurrentSolutionManager.GetSolutionWhereComponentIs(SelectedSolutionComponent.ObjectId);
+                            SetSolutionSubset(solutions);
                         }
                         catch (Exception ex)
                         {
@@ -965,7 +1061,7 @@ namespace SolutionManagerUI.ViewModels
                             {
                                 SolutionFilter = null;
                                 var solutionCreated = mergeManager.GetViewModel().MergedSolution;
-                                ReloadSolutions(solutionCreated);
+                                ReloadSolutions(solutionCreated.Id);
                             }
 
                         }
@@ -1015,7 +1111,7 @@ namespace SolutionManagerUI.ViewModels
                             mergeManager.ShowDialog();
                             SolutionFilter = null;
                             var solutionCreated = mergeManager.GetViewModel().MergedSolution;
-                            ReloadSolutions(solutionCreated);
+                            ReloadSolutions(solutionCreated.Id);
                         }
                         catch (Exception ex)
                         {

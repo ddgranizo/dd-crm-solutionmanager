@@ -26,6 +26,7 @@
             <vm:MergeSolutionsManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:MergeSolutionsManagerViewModel>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
+            <conv:IndexConverter x:Key="IndexConverter" />
             <ObjectDataProvider x:Key="operationTypes" MethodName="GetValues" ObjectType="{x:Type System:Enum}">
                 <ObjectDataProvider.MethodParameters>
                     <x:Type TypeName="vm:OperationType"/>
@@ -63,7 +64,16 @@
                                           PreviewMouseWheel="SolutionComponentsList_PreviewMouseWheel">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
-                                    <custom:SolutionComponent Component="{Binding}"></custom:SolutionComponent>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+
+                                        <custom:SolutionComponent Component="{Binding}" Grid.Column="1"></custom:SolutionComponent>
+                                    </Grid>
+                                   
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                             <ListView.ItemContainerStyle>
@@ -71,6 +81,21 @@
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                 </Style>
                             </ListView.ItemContainerStyle>
+                            <ListView.Style>
+                                <Style TargetType="ListView">
+                                    <Style.Triggers>
+                                        <Trigger Property="HasItems" Value="False">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ListView">
+                                                        <TextBlock Text="No items..."/>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.Style>
                         </ListView>
                     </ScrollViewer>
                 </GroupBox>
@@ -127,7 +152,13 @@
                                         <ListView.ItemTemplate>
                                             <DataTemplate>
                                                 <Grid Margin="5">
-                                                    <TextBlock Text="{Binding DisplayName}"></TextBlock>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+
+                                                    <TextBlock Grid.Column="1" Text="{Binding DisplayName}"></TextBlock>
                                                 </Grid>
                                             </DataTemplate>
                                         </ListView.ItemTemplate>
@@ -136,6 +167,21 @@
                                                 <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                             </Style>
                                         </ListView.ItemContainerStyle>
+                                        <ListView.Style>
+                                            <Style TargetType="ListView">
+                                                <Style.Triggers>
+                                                    <Trigger Property="HasItems" Value="False">
+                                                        <Setter Property="Template">
+                                                            <Setter.Value>
+                                                                <ControlTemplate TargetType="ListView">
+                                                                    <TextBlock Text="No items..."/>
+                                                                </ControlTemplate>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </ListView.Style>
                                     </ListView>
                                 </ScrollViewer>
 

@@ -119,7 +119,20 @@ namespace DD.Crm.SolutionManager.Extensions
 
         public static SiteMapData ToSiteMap(this Entity e)
         {
-            return GetGenericData<SiteMapData>(e);
+            SiteMapData sitemap = new SiteMapData();
+
+            bool isAppWare = e.GetAttributeValue<bool>("isappaware");
+            if (isAppWare)
+            {
+                sitemap.DisplayName = e.GetAttributeValue<string>("sitemapname");
+                sitemap.Name = e.GetAttributeValue<string>("sitemapnameunique");
+            }
+            else
+            {
+                sitemap.DisplayName = "## CRM Sitemap";
+            }
+            
+            return sitemap;
         }
 
         public static ViewData ToViewData(this Entity e)

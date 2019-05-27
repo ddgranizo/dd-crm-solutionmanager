@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft;
 
 namespace DD.Crm.SolutionManager.Utilities
 {
@@ -19,8 +20,75 @@ namespace DD.Crm.SolutionManager.Utilities
     {
 
 
+        public static void UpdateSolutionVersion(IOrganizationService service, Guid solutionId, string newVersion)
+        {
+            Entity e = new Entity(Solution.EntityLogicalName);
+            e.Id = solutionId;
+            e[Solution.AttributeDefinitions.Version] = newVersion;
+            service.Update(e);
+        }
+
+        public static void CleanSolution(IOrganizationService service, string uniqueName)
+        {
+            var solution = GetSolution(service, uniqueName);
+            if (solution != null)
+            {
+                var solutionComponents = GetSolutionComponents(service, solution.Id)
+                   .OrderBy(k => k.GetOrderWeight())
+                   .Reverse();
+
+                foreach (var item in solutionComponents)
+                {
+                    RemoveSolutionComponentRequest req = new RemoveSolutionComponentRequest()
+                    {
+                        ComponentId = item.ObjectId,
+                        ComponentType = (int)item.Type,
+                        SolutionUniqueName = uniqueName,
+                    };
+                    service.Execute(req);
+                }
+            }
+        }
 
 
+        public static void RemoveSolution(IOrganizationService service, Guid solutionId)
+        {
+            service.Delete(Solution.EntityLogicalName, solutionId);
+        }
+
+
+
+        public static Guid CloneSolution(
+            IOrganizationService service,
+            Guid sourceId,
+            string newName = null,
+            string newUniqueName = null,
+            string newVersion = null,
+            string newDescription = null)
+        {
+
+            var solution = GetSolution(service, sourceId);
+            var name = string.IsNullOrEmpty(newName)
+                         ? string.Format("{0}_Copy", solution.DisplayName)
+                         : newName;
+            var uniqueName = string.IsNullOrEmpty(newUniqueName)
+                         ? string.Format("{0}_copy_rand_{1}", solution.UniqueName, RandomString(3))
+                         : newUniqueName;
+
+            var version = string.IsNullOrEmpty(newVersion) ? solution.Version : newVersion;
+            var description = string.IsNullOrEmpty(newDescription) ? solution.Description : newDescription;
+
+            var newSolution = CreateSolution(service, name, uniqueName, solution.Publisher, version, description);
+
+            var componentsInSourceSolution =
+                GetSolutionComponents(service, sourceId, false)
+                .OrderBy(k => k.GetOrderWeight());
+            foreach (var component in componentsInSourceSolution)
+            {
+                AddComponentToSolution(service, newSolution.Id, component);
+            }
+            return newSolution.Id;
+        }
 
 
 
@@ -39,6 +107,7 @@ namespace DD.Crm.SolutionManager.Utilities
             {
                 var idRef = item.GetAttributeValue<EntityReference>("solutionid");
                 var id = idRef.Id;
+                solutionIds.Add(id);
             }
             return GetSolutions(service, solutionIds);
         }
@@ -48,6 +117,7 @@ namespace DD.Crm.SolutionManager.Utilities
             string name,
             string uniqueName,
             EntityReference publisher,
+            string version,
             string description)
         {
             Entity e = new Entity(Solution.EntityLogicalName);
@@ -55,7 +125,8 @@ namespace DD.Crm.SolutionManager.Utilities
             e[Solution.AttributeDefinitions.UniqueName] = uniqueName;
             e[Solution.AttributeDefinitions.Publisher] = publisher;
             e[Solution.AttributeDefinitions.Description] = description;
-            e[Solution.AttributeDefinitions.Version] = "1.0.0.0";
+            var ver = string.IsNullOrEmpty(version) ? "1.0.0.0" : version;
+            e[Solution.AttributeDefinitions.Version] = ver;
             var id = service.Create(e);
             return service.Retrieve(Solution.EntityLogicalName, id, new ColumnSet(true)).ToSolution();
         }
@@ -224,6 +295,23 @@ namespace DD.Crm.SolutionManager.Utilities
             return attributeResponse.EntityKeyMetadata;
         }
 
+
+        public static Solution GetSolution(IOrganizationService service, Guid solutionId)
+        {
+            return service.Retrieve(Solution.EntityLogicalName, solutionId, new ColumnSet(true)).ToSolution();
+        }
+
+        public static Solution GetSolution(IOrganizationService service, string uniqueName)
+        {
+            QueryByAttribute qe = new QueryByAttribute(Solution.EntityLogicalName);
+            qe.AddAttributeValue(Solution.AttributeDefinitions.UniqueName, uniqueName);
+            qe.ColumnSet = new ColumnSet(true);
+            return service.RetrieveMultiple(qe)
+                    .Entities
+                    .Select(k => { return k.ToSolution(); })
+                    .FirstOrDefault();
+
+        }
         public static List<Solution> GetSolutions(IOrganizationService service)
         {
             QueryExpression qe = new QueryExpression(Solution.EntityLogicalName);
@@ -421,7 +509,13 @@ namespace DD.Crm.SolutionManager.Utilities
         }
 
 
-
+        private static Random random = new Random();
+        public static string RandomString(int length)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
 
         public static IOrganizationService GetService(string stringConnection)
         {
