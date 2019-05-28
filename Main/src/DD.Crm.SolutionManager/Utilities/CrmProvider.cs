@@ -13,11 +13,87 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft;
+using System.IO;
+using System.ServiceModel;
 
 namespace DD.Crm.SolutionManager.Utilities
 {
     public static class CrmProvider
     {
+        public static void ImportSolution(
+                IOrganizationService service,
+                byte[] data,
+                bool overwriteUnmanagedCustomizations = true,
+                bool migrateAsHold = false,
+                bool publishWorkflows = true)
+        {
+            ImportSolutionRequest importRequest = new ImportSolutionRequest()
+            {
+                CustomizationFile = data,
+                OverwriteUnmanagedCustomizations = overwriteUnmanagedCustomizations,
+                HoldingSolution = migrateAsHold,
+                PublishWorkflows = publishWorkflows,
+            };
+            service.Execute(importRequest);
+        }
+
+
+        public static Guid ImportSolutionAsync(
+                IOrganizationService service,
+                byte[] data,
+                bool overwriteUnmanagedCustomizations = true,
+                bool migrateAsHold = false,
+                bool publishWorkflows = true)
+        {
+            ImportSolutionRequest importRequest = new ImportSolutionRequest()
+            {
+                CustomizationFile = data,
+                OverwriteUnmanagedCustomizations = overwriteUnmanagedCustomizations,
+                HoldingSolution = migrateAsHold,
+                PublishWorkflows = publishWorkflows,
+            };
+
+            ExecuteAsyncRequest asyncRequest = new ExecuteAsyncRequest()
+            {
+                Request = importRequest,
+
+            };
+            var asyncResponse = (ExecuteAsyncResponse)service.Execute(asyncRequest);
+            var asyncJobId = asyncResponse.AsyncJobId;
+            return asyncJobId;
+        }
+
+
+        public static void ExportSolution(IOrganizationService service, string uniqueName, string path, bool managed)
+        {
+            ExportSolutionRequest req = new ExportSolutionRequest()
+            {
+                Managed = managed,
+                SolutionName = uniqueName,
+            };
+            var response = (ExportSolutionResponse)service.Execute(req);
+            File.WriteAllBytes(path, response.ExportSolutionFile);
+        }
+
+        public static List<Solution> FindEmptySolutions(IOrganizationService service)
+        {
+            QueryExpression qe = new QueryExpression(Solution.EntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            var solutionList = service.RetrieveMultiple(qe)
+                                 .Entities
+                                 .Select(k => { return k.ToSolution(); });
+
+            List<Solution> emptySolutions = new List<Solution>();
+            foreach (var solution in solutionList)
+            {
+                var components = GetSolutionComponents(service, solution.Id, false);
+                if (components.Count == 0)
+                {
+                    emptySolutions.Add(solution);
+                }
+            }
+            return emptySolutions;
+        }
 
 
         public static void UpdateSolutionVersion(IOrganizationService service, Guid solutionId, string newVersion)
@@ -105,7 +181,7 @@ namespace DD.Crm.SolutionManager.Utilities
             List<Guid> solutionIds = new List<Guid>();
             foreach (var item in solutionList)
             {
-                var idRef = item.GetAttributeValue<EntityReference>("solutionid");
+                var idRef = item.GetAttributeValue<EntityReference>(Solution.AttributeDefinitions.Id);
                 var id = idRef.Id;
                 solutionIds.Add(id);
             }
@@ -524,6 +600,52 @@ namespace DD.Crm.SolutionManager.Utilities
                                                         crmService.OrganizationWebProxyClient :
                                                         (IOrganizationService)crmService.OrganizationServiceProxy;
             return serviceProxy;
+        }
+
+
+
+        public static void WaitAsnycOperation(IOrganizationService service, Guid jobId)
+        {
+            int timeMaxForTimeOut = 1000 * 60 * 200;
+            DateTime end = DateTime.Now.AddMilliseconds(timeMaxForTimeOut);
+            bool completed = false;
+            while (!completed && end >= DateTime.Now)
+            {
+                System.Threading.Thread.Sleep(200);
+                try
+                {
+                    Entity asyncOperation = service.Retrieve("asyncoperation", jobId, new ColumnSet(true));
+                    var statusCode = asyncOperation.GetAttributeValue<OptionSetValue>("statuscode").Value;
+                    if (statusCode == 30)
+                    {
+                        completed = true;
+                    }
+                    else if (statusCode == 21
+                            || statusCode == 22
+                            || statusCode == 31
+                            || statusCode == 32)
+                    {
+                        throw new Exception(
+                                string.Format(
+                                    "Solution Import Failed: {0} {1}",
+                                    statusCode,
+                                    asyncOperation.GetAttributeValue<string>("message")));
+                    }
+                }
+                catch (TimeoutException)
+                {
+                    //do nothign
+                }
+                catch (FaultException)
+                {
+                    //Do nothing
+                }
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+
+            }
         }
 
     }

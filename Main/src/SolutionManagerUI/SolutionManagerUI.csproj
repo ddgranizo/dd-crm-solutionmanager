@@ -87,6 +87,8 @@
     <Reference Include="System.ServiceModel.Web" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Services" />
+    <Reference Include="System.Windows" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Workflow.Activities" />
     <Reference Include="System.Workflow.ComponentModel" />
     <Reference Include="System.Workflow.Runtime" />
@@ -137,6 +139,7 @@
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
+    <Compile Include="ViewModels\ImportSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\CloneSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\SuperSolutionsManagerViewModel.cs" />
     <Compile Include="ViewModels\MergeSolutionsManagerViewModel.cs" />
@@ -144,6 +147,9 @@
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\SolutionComponentViewModel.cs" />
+    <Compile Include="Views\ImportSolutionManager.xaml.cs">
+      <DependentUpon>ImportSolutionManager.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ConnectionManager.xaml.cs">
       <DependentUpon>ConnectionManager.xaml</DependentUpon>
     </Compile>
@@ -169,6 +175,10 @@
     <Page Include="Controls\SolutionComponent.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ImportSolutionManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ConnectionManager.xaml">
       <SubType>Designer</SubType>

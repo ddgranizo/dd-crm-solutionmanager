@@ -9,6 +9,14 @@ namespace SolutionManagerUI.Utilities
 {
    public static class StringFormatter
     {
+
+        public static string GetSolutionFileName(string uniqueName, string version, bool managed)
+        {
+            string managedStr = managed ? "_managed" : string.Empty;
+            string fileName = $"{uniqueName}_{string.Join("_", version.Split('.'))}{managedStr}.zip";
+            return fileName;
+        }
+
         public static string FormatString(string text)
         {
             if (string.IsNullOrEmpty(text))

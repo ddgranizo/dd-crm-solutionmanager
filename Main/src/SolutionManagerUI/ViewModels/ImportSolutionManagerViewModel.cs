@@ -22,10 +22,59 @@ namespace SolutionManagerUI.ViewModels
 
 
 
-    public class ImportSolutionManagerViewModel : BaseViewModel
+    public class CloneSolutionManagerViewModel : BaseViewModel
     {
 
         private Window _window;
+
+
+        private Solution _currentSolution = null;
+        public Solution CurrentSolution
+        {
+            get
+            {
+                return _currentSolution;
+            }
+            set
+            {
+                _currentSolution = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentSolution"));
+            }
+        }
+
+
+
+        private string _newName = null;
+        public string NewName
+        {
+            get
+            {
+                return _newName;
+            }
+            set
+            {
+                _newName = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewName"));
+                this.NewUniqueName = StringFormatter.FormatString(value);
+                RaiseCanExecuteChanged();
+            }
+        }
+
+
+        private string _newUniqueName = null;
+        public string NewUniqueName
+        {
+            get
+            {
+                return _newUniqueName;
+            }
+            set
+            {
+                _newUniqueName = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewUniqueName"));
+                RaiseCanExecuteChanged();
+            }
+        }
 
 
 
@@ -54,73 +103,13 @@ namespace SolutionManagerUI.ViewModels
             {
                 _isDialogOpen = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsDialogOpen"));
-            }
-        }
-
-
-        private bool _overwriteUnmanagedCustomizations = true;
-        public bool OverwriteUnmanagedCustomizations
-        {
-            get
-            {
-                return _overwriteUnmanagedCustomizations;
-            }
-            set
-            {
-                _overwriteUnmanagedCustomizations = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("OverwriteUnmanagedCustomizations"));
-            }
-        }
-
-
-        private bool _migrateAsHold = false;
-        public bool MigrateAsHold
-        {
-            get
-            {
-                return _migrateAsHold;
-            }
-            set
-            {
-                _migrateAsHold = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("MigrateAsHold"));
-            }
-        }
-
-
-        private bool _publishWorkflows = true;
-        public bool PublishWorkflows
-        {
-            get
-            {
-                return _publishWorkflows;
-            }
-            set
-            {
-                _publishWorkflows = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("PublishWorkflows"));
-            }
-        }
-
-
-        private bool _importAsync = true;
-        public bool ImportAsync
-        {
-            get
-            {
-                return _importAsync;
-            }
-            set
-            {
-                _importAsync = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("ImportAsync"));
+                RaiseCanExecuteChanged();
             }
         }
 
         public Guid ClonedSolutionId { get; set; }
 
         public SolutionManager CurrentSolutionManager { get; set; }
-        public string Path { get; set; }
 
         public void Initialize(
             Window window,
@@ -128,20 +117,21 @@ namespace SolutionManagerUI.ViewModels
             CrmConnection crmConnection,
             SolutionManager solutionManager,
             List<Setting> settings,
-            string path)
+            Solution solution)
         {
             this._window = window;
             this.CurrentSolutionManager = solutionManager;
+            this.CurrentSolution = solution;
 
             RegisterCommands();
 
-            this.Path = Path;
+            this.NewName = string.Format("{0}_Copy", solution.DisplayName);
         }
 
-        private Guid _importTaskId = Guid.NewGuid();
-        private void ImportSolution()
+        private Guid _cloneTaskId = Guid.NewGuid();
+        private void CloneSolution()
         {
-            SetDialog("Importing async...");
+            SetDialog("Cloning...");
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 var isError = false;
@@ -149,16 +139,9 @@ namespace SolutionManagerUI.ViewModels
                 var clonedSolutionId = Guid.Empty;
                 try
                 {
-                    if (ImportAsync)
-                    {
-                        CurrentSolutionManager
-                            .ImportSolutionAsnyc(Path, OverwriteUnmanagedCustomizations, MigrateAsHold, PublishWorkflows);
-                    }
-                    else
-                    {
-                        CurrentSolutionManager
-                            .ImportSolution(Path, OverwriteUnmanagedCustomizations, MigrateAsHold, PublishWorkflows);
-                    }
+                    //TODO: add version and description
+                    clonedSolutionId = CurrentSolutionManager.CloneSolution(CurrentSolution.Id, NewName, NewUniqueName);
+                   
                 }
                 catch (Exception ex)
                 {
@@ -173,32 +156,33 @@ namespace SolutionManagerUI.ViewModels
                     }
                     else
                     {
+                        this.ClonedSolutionId = clonedSolutionId;
                         _window.Close();
                     }
                     UnsetDialog();
                 });
-            }, string.Empty, _importTaskId);
+            }, "Cloning solution...", _cloneTaskId);
         }
 
     
         protected override void RegisterCommands()
         {
-            Commands.Add("ImportSolutionCommand", ImportSolutionCommand);
+            Commands.Add("CloneSolutionCommand", CloneSolutionCommand);
         }
 
 
-        private ICommand _importSolutionCommand = null;
-        public ICommand ImportSolutionCommand
+        private ICommand _cloneSolutionCommand = null;
+        public ICommand CloneSolutionCommand
         {
             get
             {
-                if (_importSolutionCommand == null)
+                if (_cloneSolutionCommand == null)
                 {
-                    _importSolutionCommand = new RelayCommand((object param) =>
+                    _cloneSolutionCommand = new RelayCommand((object param) =>
                     {
                         try
                         {
-                            ImportSolution();
+                            CloneSolution();
                         }
                         catch (Exception ex)
                         {
@@ -206,10 +190,10 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return true;
+                        return !string.IsNullOrEmpty( NewName) && !string.IsNullOrEmpty(NewUniqueName);
                     });
                 }
-                return _importSolutionCommand;
+                return _cloneSolutionCommand;
             }
         }
 

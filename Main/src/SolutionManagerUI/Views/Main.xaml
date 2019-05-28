@@ -65,16 +65,21 @@
                     <MenuItem Header="Archivo">
                         <MenuItem Header="New" Command="{Binding Source={StaticResource viewModel}, Path=NewCommand, Mode=OneWay}" />
                     </MenuItem>
-                    <MenuItem Header="Mode">
-                        <MenuItem Header="Aggregated/Work" Command="{Binding Source={StaticResource viewModel}, Path=SetAggregatedWorkSolutionsModeCommand, Mode=OneWay}" />
-                        <MenuItem Header="Solutions" Command="{Binding Source={StaticResource viewModel}, Path=SetSolutionsModeCommand, Mode=OneWay}" />
-                    </MenuItem>
                     <MenuItem Header="Settings">
                         <MenuItem Header="Manage connections"  Command="{Binding Source={StaticResource viewModel}, Path=OpenConnectionsCommand, Mode=OneWay}" />
                         <MenuItem Header="Manage settings"  Command="{Binding Source={StaticResource viewModel}, Path=OpenSettingsCommand, Mode=OneWay}" />
                     </MenuItem>
+                    <MenuItem Header="Mode">
+                        <MenuItem Header="Aggregated/Work" Command="{Binding Source={StaticResource viewModel}, Path=SetAggregatedWorkSolutionsModeCommand, Mode=OneWay}" />
+                        <MenuItem Header="Solutions" Command="{Binding Source={StaticResource viewModel}, Path=SetSolutionsModeCommand, Mode=OneWay}" />
+                    </MenuItem>
+                    <MenuItem Header="Solution">
+                        <MenuItem Header="Find empty solutions"  Command="{Binding Source={StaticResource viewModel}, Path=FindEmptySolutionsCommand, Mode=OneWay}" />
+                    </MenuItem>
                     <MenuItem Header="Solution component">
                         <MenuItem Header="Find why is not in"  Command="{Binding Source={StaticResource viewModel}, Path=FindReasonWhyComponentIsNotInCommand, Mode=OneWay}" />
+                        <Separator></Separator>
+                        <MenuItem Header="Find layers where component is"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
                     </MenuItem>
                 </Menu>
             </DockPanel>
@@ -298,14 +303,23 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock  Grid.Column="0"  Text="{Binding  StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
                                                 <TextBlock Foreground="{Binding IsManaged, Converter={StaticResource IsManagedToFontColorConverter}}"  Grid.Column="1" Text="{Binding DisplayName}"></TextBlock>
                                                 <TextBlock  Grid.Column="2" Margin="5,0,0,0" Text="{Binding Version, StringFormat='({0})'}" ></TextBlock>
+                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
+                                                <TextBlock  Grid.Column="4" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Clone solution" Command="{Binding Source={StaticResource viewModel}, Path=CloneSolutionCommand, Mode=OneWay}" />
+                                                        <MenuItem Header="Delete solution" Command="{Binding Source={StaticResource viewModel}, Path=DeleteSolutionCommand, Mode=OneWay}" />
+                                                        <MenuItem Header="Export">
+                                                            <MenuItem Header="Export Managed" Command="{Binding Source={StaticResource viewModel}, Path=ExportManagedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Export Unmanaged" Command="{Binding Source={StaticResource viewModel}, Path=ExportUnmanagedSolutionCommand, Mode=OneWay}" />
+                                                        </MenuItem>
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
                                             </Grid>

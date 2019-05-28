@@ -5,6 +5,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Tooling.Connector;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,6 +26,51 @@ namespace DD.Crm.SolutionManager
         {
             this._service = service;
         }
+
+
+        public void ImportSolution(
+           string path,
+           bool overwriteUnmanagedCustomizations = true,
+           bool migrateAsHold = false,
+           bool publishWorkflows = true)
+        {
+            var data = File.ReadAllBytes(path);
+            CrmProvider
+                .ImportSolution(
+                    _service,
+                    data,
+                    overwriteUnmanagedCustomizations,
+                    migrateAsHold,
+                    publishWorkflows);
+        }
+
+        public void ImportSolutionAsnyc(
+            string path,
+            bool overwriteUnmanagedCustomizations = true,
+            bool migrateAsHold = false,
+            bool publishWorkflows = true)
+        {
+            var data = File.ReadAllBytes(path);
+            var jobId = CrmProvider
+                    .ImportSolutionAsync(
+                        _service,
+                        data,
+                        overwriteUnmanagedCustomizations,
+                        migrateAsHold,
+                        publishWorkflows);
+            CrmProvider.WaitAsnycOperation(_service, jobId);
+        }
+
+        public void ExportSolution(string uniqueName, string path, bool managed)
+        {
+            CrmProvider.ExportSolution(_service, uniqueName, path, managed);
+        }
+
+        public List<Solution> FindEmptySolutions()
+        {
+            return CrmProvider.FindEmptySolutions(_service);
+        }
+
 
         public void IncreaseSolutionRevisionVersion(Guid solutionId)
         {

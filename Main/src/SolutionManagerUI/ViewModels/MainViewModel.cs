@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +27,8 @@ namespace SolutionManagerUI.ViewModels
 
     public class MainViewModel : BaseViewModel
     {
+
+        public const string DefaultExportPathSettingKey = "SOLUTION_OUTPUT_DIRECTORY";
 
         public event OnRequetedSelectionListHandler OnRequetedSelectAllWorkSolutions;
         public event OnRequetedSelectionListHandler OnRequetedUnselectAllWorkSolutions;
@@ -95,6 +98,8 @@ namespace SolutionManagerUI.ViewModels
                 RaiseCanExecuteChanged();
             }
         }
+
+
 
         private bool _isRetrievingSolutionComponents = false;
         public bool IsRetrievingSolutionComponents
@@ -373,6 +378,7 @@ namespace SolutionManagerUI.ViewModels
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedSolution"));
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedSolutionsString"));
                 RaiseCanExecuteChanged();
+
             }
         }
 
@@ -855,7 +861,89 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-     
+
+
+        private Guid _findEmptySolutionsTaskId = Guid.NewGuid();
+        public void FindEmptySolutions()
+        {
+            SetDialog("Finding empty solutions...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var emptySolutions = new List<Solution>();
+                var isError = false;
+                var errorMessage = string.Empty;
+                try
+                {
+                    emptySolutions = CurrentSolutionManager.FindEmptySolutions();
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        SetSolutionSubset(emptySolutions);
+                    }
+                    UnsetDialog();
+                });
+            }, "Finding empty solutions...", _retrieveWorkSolutionTaskId);
+        }
+
+
+        private Guid _exportingSolutionTaskId = Guid.NewGuid();
+
+        private void ExportSolution(Solution solution, bool managed)
+        {
+            var defaultPath = SettingsManager.GetSetting<string>(this.Settings, DefaultExportPathSettingKey, null);
+            var path = SelectPath(defaultPath);
+            path = GetPathWithLastSlash(path);
+            var fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, managed);
+            var fullPath = string.Format("{0}{1}", path, fileName);
+            SetDialog($"Exporting solution managed={managed}...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var isError = false;
+                var errorMessage = string.Empty;
+                try
+                {
+                    CurrentSolutionManager.ExportSolution(solution.UniqueName, fullPath, managed);
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+
+                    }
+                    UnsetDialog();
+                });
+            }, string.Empty, _exportingSolutionTaskId);
+        }
+
+        private static string GetPathWithLastSlash(string path)
+        {
+            if (path.Last() != '\\' && path.Last() != '/')
+            {
+                path = string.Format("{0}\\", path);
+            }
+
+            return path;
+        }
 
         protected override void RegisterCommands()
         {
@@ -894,6 +982,148 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("CloneSolutionCommand", CloneSolutionCommand);
 
+
+            Commands.Add("FindEmptySolutionsCommand", FindEmptySolutionsCommand);
+            Commands.Add("DeleteSolutionCommand", DeleteSolutionCommand);
+
+            Commands.Add("ExportManagedSolutionCommand", ExportManagedSolutionCommand);
+            Commands.Add("ExportUnmanagedSolutionCommand", ExportUnmanagedSolutionCommand);
+
+
+        }
+
+
+
+        private string SelectPath(string defaultPath = null)
+        {
+            string path = null;
+            using (var fbd = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                if (!string.IsNullOrEmpty(defaultPath) && Directory.Exists(defaultPath))
+                {
+                    fbd.SelectedPath = defaultPath;
+                }
+                System.Windows.Forms.DialogResult result = fbd.ShowDialog();
+                if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
+                {
+                    path = fbd.SelectedPath;
+                }
+            }
+            return path;
+        }
+
+        private ICommand _exportUnmanagedSolutionCommand = null;
+        public ICommand ExportUnmanagedSolutionCommand
+        {
+            get
+            {
+                if (_exportUnmanagedSolutionCommand == null)
+                {
+                    _exportUnmanagedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ExportSolution(SelectedSolution, false);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+                    });
+                }
+                return _exportUnmanagedSolutionCommand;
+            }
+        }
+
+
+        private ICommand _exportManagedSolutionCommand = null;
+        public ICommand ExportManagedSolutionCommand
+        {
+            get
+            {
+                if (_exportManagedSolutionCommand == null)
+                {
+                    _exportManagedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ExportSolution(SelectedSolution, true);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+                    });
+                }
+                return _exportManagedSolutionCommand;
+            }
+        }
+
+        private ICommand _deleteSolutionCommand = null;
+        public ICommand DeleteSolutionCommand
+        {
+            get
+            {
+                if (_deleteSolutionCommand == null)
+                {
+                    _deleteSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var response =
+                                MessageBox.Show($"Are you sure you want to remove the solution '{SelectedSolution.DisplayName} ({SelectedSolution.UniqueName})'? This operation cannot be undone!", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                            if (response == MessageBoxResult.Yes)
+                            {
+                                CurrentSolutionManager.RemoveSolution(SelectedSolution.Id);
+                                SolutionFilter = null;
+                                ReloadSolutions();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+                    });
+                }
+                return _deleteSolutionCommand;
+            }
+        }
+
+
+        private ICommand _findEmptySolutionsCommand = null;
+        public ICommand FindEmptySolutionsCommand
+        {
+            get
+            {
+                if (_findEmptySolutionsCommand == null)
+                {
+                    _findEmptySolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            FindEmptySolutions();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _findEmptySolutionsCommand;
+            }
         }
 
 
