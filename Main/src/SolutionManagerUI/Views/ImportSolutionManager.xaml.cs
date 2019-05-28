@@ -35,7 +35,6 @@ namespace SolutionManagerUI.Views
             InitializeComponent();
             this._viewModel = LayoutRoot.Resources["viewModel"] as ImportSolutionManagerViewModel;
             _viewModel.Initialize(this, service, currentCrmConnection, solutionManager, settings, path);
-
         }
 
     }

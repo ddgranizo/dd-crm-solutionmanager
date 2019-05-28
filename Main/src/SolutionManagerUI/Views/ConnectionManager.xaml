@@ -7,10 +7,10 @@
         xmlns:fa="http://schemas.fontawesome.io/icons/"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
         xmlns:vm="clr-namespace:SolutionManagerUI.ViewModels"
         xmlns:conv="clr-namespace:SolutionManagerUI.Converters" 
-        
+        xmlns:models="clr-namespace:SolutionManagerUI.Models" 
         
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
@@ -27,7 +27,11 @@
             <vm:ConnectionManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:ConnectionManagerViewModel>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
-
+            <ObjectDataProvider x:Key="crmColors" MethodName="GetValues" ObjectType="{x:Type System:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="models:CrmColor"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
         </Grid.Resources>
 
         <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
@@ -97,6 +101,7 @@
                                 <RowDefinition Height="30"/>
                                 <RowDefinition Height="30"/>
                                 <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
@@ -114,8 +119,10 @@
                             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="3">Password</Label>
                             <PasswordBox x:Name="txtNewPassword" Grid.Row="3" Grid.Column="1"  VerticalAlignment="Center" PasswordChanged="TxtNewPassword_PasswordChanged"></PasswordBox>
 
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="4">Color</Label>
+                            <ComboBox VerticalAlignment="Center" Grid.Row="4" Grid.Column="1" SelectedItem="{Binding NewColor}" ItemsSource="{Binding Source={StaticResource crmColors}}"></ComboBox>
 
-                            <StackPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <StackPanel Grid.Row="6" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
                                 <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new connection" Command="{Binding Source={StaticResource viewModel}, Path=CancelRequestCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
                                 </Button>
@@ -139,6 +146,7 @@
                                 <RowDefinition Height="30"/>
                                 <RowDefinition Height="30"/>
                                 <RowDefinition Height="30"/>
+                                <RowDefinition Height="30"/>
                                 <RowDefinition Height="*"/>
                                 <RowDefinition Height="auto"/>
                             </Grid.RowDefinitions>
@@ -155,9 +163,11 @@
 
                             <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="3">Password</Label>
                             <PasswordBox x:Name="txtEditPassword" Grid.Row="3" Grid.Column="1"  VerticalAlignment="Center" PasswordChanged="TxtEditPassword_PasswordChanged"></PasswordBox>
+                            
+                            <Label VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Column="0" Grid.Row="4">Color</Label>
+                            <ComboBox VerticalAlignment="Center" Grid.Row="4" Grid.Column="1" SelectedItem="{Binding Color}" ItemsSource="{Binding Source={StaticResource crmColors}}"></ComboBox>
 
-
-                            <StackPanel Grid.Row="5" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
+                            <StackPanel Grid.Row="6" Grid.ColumnSpan="2" HorizontalAlignment="Right" Orientation="Horizontal">
                                 <Button Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Save new connection" Command="{Binding Source={StaticResource viewModel}, Path=CancelRequestCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
                                 </Button>

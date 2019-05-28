@@ -403,8 +403,8 @@ namespace SolutionManagerUI.ViewModels
 
 
             var uniqueName = StringFormatter.FormatString(aggregatedSolution.Name);
-            this.NewDisplayName = string.Format(aggregatedSolutionName, aggregatedSolution.Type.ToString(), uniqueName);
-            this.UniqueName = NewDisplayName;
+            this.NewDisplayName = string.Format("AGGR - {0} - {1}", aggregatedSolution.Type.ToString(), aggregatedSolution.Name);
+            this.UniqueName = string.Format(aggregatedSolutionName, aggregatedSolution.Type.ToString(), uniqueName);
 
         }
 

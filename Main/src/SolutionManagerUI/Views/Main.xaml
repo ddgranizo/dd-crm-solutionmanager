@@ -74,6 +74,8 @@
                         <MenuItem Header="Solutions" Command="{Binding Source={StaticResource viewModel}, Path=SetSolutionsModeCommand, Mode=OneWay}" />
                     </MenuItem>
                     <MenuItem Header="Solution">
+                        <MenuItem Header="Import solution"  Command="{Binding Source={StaticResource viewModel}, Path=ImportSolutionCommand, Mode=OneWay}" />
+                        <Separator />
                         <MenuItem Header="Find empty solutions"  Command="{Binding Source={StaticResource viewModel}, Path=FindEmptySolutionsCommand, Mode=OneWay}" />
                     </MenuItem>
                     <MenuItem Header="Solution component">
@@ -315,6 +317,8 @@
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Clone solution" Command="{Binding Source={StaticResource viewModel}, Path=CloneSolutionCommand, Mode=OneWay}" />
+                                                        <MenuItem Header="Clean solution" Command="{Binding Source={StaticResource viewModel}, Path=CleanSolutionCommand, Mode=OneWay}" />
+
                                                         <MenuItem Header="Delete solution" Command="{Binding Source={StaticResource viewModel}, Path=DeleteSolutionCommand, Mode=OneWay}" />
                                                         <MenuItem Header="Export">
                                                             <MenuItem Header="Export Managed" Command="{Binding Source={StaticResource viewModel}, Path=ExportManagedSolutionCommand, Mode=OneWay}" />
@@ -481,6 +485,9 @@
                     </StackPanel>
 
 
+                </StatusBarItem>
+                <StatusBarItem>
+                    <TextBlock Text="{Binding CurrentCrmConnection.Endpoint, StringFormat='Connected to {0}'}"></TextBlock>
                 </StatusBarItem>
             </StatusBar>
         </Grid>

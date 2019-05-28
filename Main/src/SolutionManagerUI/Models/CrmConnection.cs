@@ -7,8 +7,19 @@ using System.Threading.Tasks;
 
 namespace SolutionManagerUI.Models
 {
+
+    public enum CrmColor
+    {
+        Black = 1,
+        Brown = 2,
+        Orange = 3,
+        Green = 4,
+        Blue = 5
+    }
     public class CrmConnection
     {
+
+        public CrmColor Color { get; set; }
         public string Name { get; set; }
         public string Endpoint { get; set; }
         public string Username { get; set; }

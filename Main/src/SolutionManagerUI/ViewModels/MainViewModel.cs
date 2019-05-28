@@ -25,6 +25,10 @@ namespace SolutionManagerUI.ViewModels
 
     public delegate void OnRequetedSelectionListHandler(object sender, EventArgs e);
 
+
+
+
+
     public class MainViewModel : BaseViewModel
     {
 
@@ -166,10 +170,9 @@ namespace SolutionManagerUI.ViewModels
             {
                 _workSolutions = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("WorkSolutions"));
-                if (AgregatedSolutions != null)
-                {
-                    UpdateListToCollection(value, FilteredWorkSolutionsCollection);
-                }
+
+                UpdateListToCollection(value, FilteredWorkSolutionsCollection);
+
 
                 RaiseCanExecuteChanged();
             }
@@ -231,10 +234,9 @@ namespace SolutionManagerUI.ViewModels
             {
                 _agregatedSolutions = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("AgregatedSolutions"));
-                if (AgregatedSolutions != null)
-                {
-                    UpdateListToCollection(value, FilteredAgregatedSolutionsCollection);
-                }
+
+                UpdateListToCollection(value, FilteredAgregatedSolutionsCollection);
+
             }
         }
 
@@ -306,15 +308,16 @@ namespace SolutionManagerUI.ViewModels
             {
                 _solutionComponents = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SolutionComponents"));
-                if (value != null)
-                {
-                    FilterAndSetSolutionComponentsCollection();
-                }
+
+                FilterAndSetSolutionComponentsCollection();
+
             }
         }
 
         private void FilterAndSetSolutionComponentsCollection()
         {
+            FilteredSolutionComponentsCollection.Clear();
+
             if (SolutionComponents != null)
             {
                 var filteredSolutionComponents = SolutionComponents;
@@ -422,15 +425,15 @@ namespace SolutionManagerUI.ViewModels
             {
                 _solutions = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Solutions"));
-                if (value != null)
-                {
-                    FilterAndSetSolutionCollection();
-                }
+
+                FilterAndSetSolutionCollection();
+
             }
         }
 
         private void FilterAndSetSolutionCollection()
         {
+            FilteredSolutionsCollection.Clear();
             if (Solutions != null)
             {
                 var filteredSolutions = Solutions;
@@ -598,10 +601,9 @@ namespace SolutionManagerUI.ViewModels
             {
                 _connections = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Connections"));
-                if (_connections != null)
-                {
-                    UpdateListToCollection(value, ConnectionsCollection);
-                }
+
+                UpdateListToCollection(value, ConnectionsCollection);
+
             }
         }
 
@@ -630,11 +632,14 @@ namespace SolutionManagerUI.ViewModels
             }
             set
             {
+                SetEmptyTemplate();
+                EmptyContext(true);
                 _currentCrmConnection = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentCrmConnection"));
                 Service = null;
                 if (value != null)
                 {
+                    SetCrmTemplate(value);
                     SetNewOrganizationService();
                 }
                 RaiseCanExecuteChanged();
@@ -802,12 +807,70 @@ namespace SolutionManagerUI.ViewModels
 
         public void Initialize(Window window)
         {
+            SetEmptyTemplate();
+
+            EmptyContext(true);
+
             RegisterCommands();
-            IsAggregatedWorkSolutionMode = true;
+            IsSolutionMode = true;
             OnLoadCommand = InitialReloadCommand;
 
         }
 
+        private void EmptyContext(bool restartSolutionManager)
+        {
+            SelectedWorkSolution = null;
+            WorkSolutions = null;
+            SelectedAggregatedSolution = null;
+            AgregatedSolutions = null;
+            SelectedSolutionComponent = null;
+            SolutionComponents = null;
+            SelectedSolution = null;
+            Solutions = null;
+            SolutionFilter = null;
+            if (restartSolutionManager)
+            {
+                CurrentSolutionManager = null;
+            }
+        }
+
+        private static void SetCrmTemplate(CrmConnection connection)
+        {
+            var theme = string.Empty;
+            if (connection.Color == CrmColor.Black)
+            {
+                theme = "Grey";
+            }
+            else if (connection.Color == CrmColor.Brown)
+            {
+                theme = "Brown";
+            }
+            else if (connection.Color == CrmColor.Orange)
+            {
+                theme = "Orange";
+            }
+            else if (connection.Color == CrmColor.Green)
+            {
+                theme = "Green";
+            }
+            else if (connection.Color == CrmColor.Blue)
+            {
+                theme = "LightBlue";
+            }
+            if (!string.IsNullOrEmpty(theme))
+            {
+                System.Windows.Application.Current.Resources.MergedDictionaries
+                    .Add(new ResourceDictionary()
+                    { Source = new Uri($"pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.{theme}.xaml") });
+            }
+        }
+
+        private static void SetEmptyTemplate()
+        {
+            System.Windows.Application.Current.Resources.MergedDictionaries.Clear();
+            System.Windows.Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary() { Source = new Uri("pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Light.xaml") });
+            System.Windows.Application.Current.Resources.MergedDictionaries.Add(new ResourceDictionary() { Source = new Uri("pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesignTheme.Defaults.xaml") });
+        }
 
         public void RaisePropertyChanged()
         {
@@ -898,11 +961,10 @@ namespace SolutionManagerUI.ViewModels
 
 
         private Guid _exportingSolutionTaskId = Guid.NewGuid();
-
         private void ExportSolution(Solution solution, bool managed)
         {
-            var defaultPath = SettingsManager.GetSetting<string>(this.Settings, DefaultExportPathSettingKey, null);
-            var path = SelectPath(defaultPath);
+            string defaultPath = GetDefaultZipPath();
+            var path = FileDialogManager.SelectPath(defaultPath);
             path = GetPathWithLastSlash(path);
             var fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, managed);
             var fullPath = string.Format("{0}{1}", path, fileName);
@@ -935,6 +997,84 @@ namespace SolutionManagerUI.ViewModels
             }, string.Empty, _exportingSolutionTaskId);
         }
 
+
+        private Guid _removeSolutionTaskId = Guid.NewGuid();
+        private void RemoveSolution(Solution solution)
+        {
+            var response =
+                MessageBox.Show($"Are you sure you want to remove the solution '{solution.DisplayName} ({solution.UniqueName})'? This operation cannot be undone!", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (response == MessageBoxResult.Yes)
+            {
+                SetDialog($"Removing solution...");
+                ThreadManager.Instance.ScheduleTask(() =>
+                {
+                    var isError = false;
+                    var errorMessage = string.Empty;
+                    try
+                    {
+                        CurrentSolutionManager.RemoveSolution(solution.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        isError = true;
+                        errorMessage = ex.Message;
+                    }
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (isError)
+                        {
+                            MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        else
+                        {
+                            ReloadSolutions();
+                        }
+                        UnsetDialog();
+                    });
+                }, string.Empty, _removeSolutionTaskId);
+            }
+
+
+
+        }
+        private Guid _cleanSolutionTaskId = Guid.NewGuid();
+        private void CleanSolution(Solution solution)
+        {
+            var response =
+                MessageBox.Show($"Are you sure you want to clean the solution '{solution.DisplayName} ({solution.UniqueName})'? This operation cannot be undone!", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (response == MessageBoxResult.Yes)
+            {
+                SetDialog($"Cleaning solution...");
+                ThreadManager.Instance.ScheduleTask(() =>
+                {
+                    var isError = false;
+                    var errorMessage = string.Empty;
+                    try
+                    {
+                        CurrentSolutionManager.CleanSolution(solution.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        isError = true;
+                        errorMessage = ex.Message;
+                    }
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if (isError)
+                        {
+                            MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                        else
+                        {
+                            ReloadSolutions();
+                        }
+                        UnsetDialog();
+                    });
+                }, string.Empty, _cleanSolutionTaskId);
+            }
+
+
+        }
         private static string GetPathWithLastSlash(string path)
         {
             if (path.Last() != '\\' && path.Last() != '/')
@@ -988,28 +1128,80 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("ExportManagedSolutionCommand", ExportManagedSolutionCommand);
             Commands.Add("ExportUnmanagedSolutionCommand", ExportUnmanagedSolutionCommand);
-
+            Commands.Add("ImportSolutionCommand", ImportSolutionCommand);
+            Commands.Add("CleanSolutionCommand", CleanSolutionCommand);
 
         }
 
-
-
-        private string SelectPath(string defaultPath = null)
+        private ICommand _cleanSolutionCommand = null;
+        public ICommand CleanSolutionCommand
         {
-            string path = null;
-            using (var fbd = new System.Windows.Forms.FolderBrowserDialog())
+            get
             {
-                if (!string.IsNullOrEmpty(defaultPath) && Directory.Exists(defaultPath))
+                if (_cleanSolutionCommand == null)
                 {
-                    fbd.SelectedPath = defaultPath;
+                    _cleanSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CleanSolution(SelectedSolution);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+
+                    });
                 }
-                System.Windows.Forms.DialogResult result = fbd.ShowDialog();
-                if (result == System.Windows.Forms.DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
-                {
-                    path = fbd.SelectedPath;
-                }
+                return _cleanSolutionCommand;
             }
-            return path;
+        }
+
+        private ICommand _importSolutionCommand = null;
+        public ICommand ImportSolutionCommand
+        {
+            get
+            {
+                if (_importSolutionCommand == null)
+                {
+                    _importSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            string defaultPath = GetDefaultZipPath();
+                            var file = FileDialogManager.SelectFile(defaultPath);
+                            if (!string.IsNullOrEmpty(file))
+                            {
+                                ImportSolutionManager import =
+                                    new ImportSolutionManager(
+                                        this.Service,
+                                        this.CurrentCrmConnection,
+                                        this.CurrentSolutionManager,
+                                        this.Settings,
+                                        file);
+                                import.ShowDialog();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _importSolutionCommand;
+            }
+        }
+
+        private string GetDefaultZipPath()
+        {
+            return SettingsManager.GetSetting<string>(this.Settings, DefaultExportPathSettingKey, null);
         }
 
         private ICommand _exportUnmanagedSolutionCommand = null;
@@ -1076,14 +1268,7 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            var response =
-                                MessageBox.Show($"Are you sure you want to remove the solution '{SelectedSolution.DisplayName} ({SelectedSolution.UniqueName})'? This operation cannot be undone!", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                            if (response == MessageBoxResult.Yes)
-                            {
-                                CurrentSolutionManager.RemoveSolution(SelectedSolution.Id);
-                                SolutionFilter = null;
-                                ReloadSolutions();
-                            }
+                            RemoveSolution(SelectedSolution);
                         }
                         catch (Exception ex)
                         {
@@ -1274,6 +1459,7 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
+                            CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
                             var settings = AppDataManager.LoadSettings();
                             MergeSolutionsManager mergeManager =
                                 new MergeSolutionsManager(
@@ -1820,8 +2006,7 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-
-
+                            EmptyContext(true);
                         }
                         catch (Exception ex)
                         {

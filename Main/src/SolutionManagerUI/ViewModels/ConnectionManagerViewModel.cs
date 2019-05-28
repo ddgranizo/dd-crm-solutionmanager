@@ -9,6 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
+using System.Resources;
 using System.Windows;
 using System.Windows.Input;
 
@@ -66,6 +68,7 @@ namespace SolutionManagerUI.ViewModels
                     Username = _selectedCrmConnection.Username;
                     Name = _selectedCrmConnection.Name;
                     Url = _selectedCrmConnection.Endpoint;
+                    Color = _selectedCrmConnection.Color;
                 }
 
             }
@@ -117,6 +120,21 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
+        private CrmColor _color = 0;
+        public CrmColor Color
+        {
+            get
+            {
+                return _color;
+            }
+            set
+            {
+                _color = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Color"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
         private string _Username = null;
         public string Username
         {
@@ -164,6 +182,20 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+        private CrmColor _newColor = 0;
+        public CrmColor NewColor
+        {
+            get
+            {
+                return _newColor;
+            }
+            set
+            {
+                _newColor = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewColor"));
+                RaiseCanExecuteChanged();
+            }
+        }
 
         private string _newName = null;
         public string NewName
@@ -297,9 +329,9 @@ namespace SolutionManagerUI.ViewModels
 
         public void Initialize(Window window, List<CrmConnection> connections)
         {
+            
             this._window = window;
             this.Connections = connections;
-
             RegisterCommands();
         }
 
@@ -512,6 +544,7 @@ namespace SolutionManagerUI.ViewModels
                             SelectedCrmConnection.Endpoint = Url;
                             SelectedCrmConnection.Name = Name;
                             SelectedCrmConnection.Username = Username;
+                            SelectedCrmConnection.Color = Color;
                             if (!string.IsNullOrEmpty(Password))
                             {
                                 SelectedCrmConnection.Password = Crypto.Encrypt(Password);
@@ -530,6 +563,7 @@ namespace SolutionManagerUI.ViewModels
                         return !string.IsNullOrEmpty(Name)
                             && !string.IsNullOrEmpty(Username)
                             && !string.IsNullOrEmpty(Url)
+                            && (int)Color > 0
                             && !IsTestingConnection;
                     });
                 }
@@ -555,6 +589,7 @@ namespace SolutionManagerUI.ViewModels
                                 Endpoint = NewUrl,
                                 Password = Crypto.Encrypt(NewPassword),
                                 Name = NewName,
+                                Color = NewColor,
                                 Username = NewUsername
                             });
                             Connections = connections;
@@ -570,6 +605,7 @@ namespace SolutionManagerUI.ViewModels
                             && !string.IsNullOrEmpty(NewUsername)
                             && !string.IsNullOrEmpty(NewPassword)
                             && !string.IsNullOrEmpty(NewUrl)
+                            && (int)NewColor > 0
                             && !IsTestingConnection;
                     });
                 }

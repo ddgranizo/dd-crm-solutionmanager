@@ -20,7 +20,7 @@
         TextOptions.TextRenderingMode="Auto"        
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{DynamicResource MaterialDesignFont}"
-        Title="Clone Manager" Height="250" Width="400">
+        Title="Import solution Manager" Height="300" Width="400">
     <Grid x:Name="LayoutRoot"  Background="White" >
         <Grid.Resources>
             <vm:ImportSolutionManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:ImportSolutionManagerViewModel>
@@ -52,7 +52,7 @@
 
 
             <Grid Grid.Column="0">
-                <GroupBox Header="Clone parameters">
+                <GroupBox Header="Import solution parameters">
                     <Grid>
                         <Grid.ColumnDefinitions >
                             <ColumnDefinition Width="auto"/>
@@ -62,18 +62,27 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
 
-                        <Label Margin="4" Grid.Row="0" Grid.Column="0">New display name:</Label>
-                        <TextBox Margin="4" Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="1" ></TextBox>
-                        
-                        <Label Margin="4" Grid.Row="1" Grid.Column="0">New unique name:</Label>
-                        <TextBox Margin="4" Text="{Binding NewUniqueName}" Grid.Row="1" Grid.Column="1"></TextBox>
+                        <Label Margin="4" Grid.Row="0" Grid.Column="0">Import async:</Label>
+                        <ToggleButton Margin="4" IsChecked="{Binding ImportAsync}" Grid.Row="0" Grid.Column="1" ></ToggleButton>
 
-                        <Button Grid.Row="3" Grid.Column="1" HorizontalAlignment="Right"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Clone solution" Command="{Binding Source={StaticResource viewModel}, Path=CloneSolutionCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                        <Label Margin="4" Grid.Row="1" Grid.Column="0">Overwrite unmanaged customizations:</Label>
+                        <ToggleButton Margin="4" IsChecked="{Binding OverwriteUnmanagedCustomizations}" Grid.Row="1" Grid.Column="1" ></ToggleButton>
+
+                        <Label Margin="4" Grid.Row="2" Grid.Column="0">Migrate as hold:</Label>
+                        <ToggleButton Margin="4" IsChecked="{Binding MigrateAsHold}" Grid.Row="2" Grid.Column="1" ></ToggleButton>
+
+                        <Label Margin="4" Grid.Row="3" Grid.Column="0">Publish workflows:</Label>
+                        <ToggleButton Margin="4" IsChecked="{Binding PublishWorkflows}" Grid.Row="3" Grid.Column="1" ></ToggleButton>
+
+
+                        <Button Grid.Row="6" Grid.Column="1" HorizontalAlignment="Right"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Import solution" Command="{Binding Source={StaticResource viewModel}, Path=ImportSolutionCommand, Mode=OneWay}" CommandParameter="{Binding}">
                             <materialDesign:PackIcon Kind="Play" Width="15" Height="15"/>
                         </Button>
                     </Grid>

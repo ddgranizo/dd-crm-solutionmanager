@@ -133,6 +133,7 @@
     <Compile Include="Utilities\AppDataManager.cs" />
     <Compile Include="Utilities\Crypto.cs" />
     <Compile Include="Utilities\DefaultSettings.cs" />
+    <Compile Include="Utilities\FileDialogManager.cs" />
     <Compile Include="Utilities\SettingsManager.cs" />
     <Compile Include="Utilities\StringFormatter.cs" />
     <Compile Include="Utilities\System32.cs" />
