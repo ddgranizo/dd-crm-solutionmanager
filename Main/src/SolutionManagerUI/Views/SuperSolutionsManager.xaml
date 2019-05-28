@@ -104,7 +104,7 @@
                         </ScrollViewer>
 
                         <Button Grid.Row="1" Width="200" Command="{Binding Source={StaticResource viewModel}, Path=FindUnassignedComponentsCommand, Mode=OneWay}">
-                            <TextBlock Text="Components unassigned"></TextBlock>
+                            <TextBlock Text="Unassigned components"></TextBlock>
                         </Button>
                     </Grid>
 

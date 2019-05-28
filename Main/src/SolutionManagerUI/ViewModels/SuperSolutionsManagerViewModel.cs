@@ -1,5 +1,6 @@
 ﻿using DD.Crm.SolutionManager;
 using DD.Crm.SolutionManager.Models;
+using DD.Crm.SolutionManager.Models.Data;
 using Microsoft.Xrm.Sdk;
 using SolutionManagerUI.Commands;
 using SolutionManagerUI.Models;
@@ -26,8 +27,8 @@ namespace SolutionManagerUI.ViewModels
     {
 
         private const string FormatSuperSolutionSettingKeyName = "COMPONENT_TYPE_{0}_SUPERSOLUTION";
-
-
+        private const string FormatWebResourceSuperSolutionSettingKeyName = "COMPONENT_TYPE_{0}_{1}_SUPERSOLUTION";
+        private const int WebResourceType = 61;
 
         private Solution _selectedSuperSolution = null;
         public Solution SelectedSuperSolution
@@ -197,7 +198,7 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
-        public Dictionary<int, string> ComponentTypesSolutionMapping { get; set; }
+        public Dictionary<string, string> ComponentTypesSolutionMapping { get; set; }
 
         public CrmConnection CurrentCrmConnection { get; set; }
         public SolutionManager CurrentSolutionManager { get; set; }
@@ -249,7 +250,7 @@ namespace SolutionManagerUI.ViewModels
                     mappingsWithBackpus = CloneAffectedSolutions(affectedSuperSolutions);
                     CleanAndMergeSourceSolutions(affectedSuperSolutions, mappingsWithBackpus);
                     RemovedClonedBackupSolutions(affectedSuperSolutions, mappingsWithBackpus);
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -423,13 +424,14 @@ namespace SolutionManagerUI.ViewModels
 
         private List<MergedInSolutionComponent> GetUnasiggnedSolutionComponents()
         {
+            //TODO: it doesn't work well with the change of webresources. Fixit!
             if (SelectedSuperSolution != null)
             {
                 var typesNotAllowed = ComponentTypesSolutionMapping
                         .Select(k => k.Key)
                         .ToList();
                 return SolutionComponents
-                        .Where(k => typesNotAllowed.IndexOf((int)k.Type) < 0)
+                        .Where(k => typesNotAllowed.IndexOf(((int)k.Type).ToString()) < 0)
                         .ToList();
             }
             return new List<MergedInSolutionComponent>();
@@ -438,17 +440,31 @@ namespace SolutionManagerUI.ViewModels
 
         private List<MergedInSolutionComponent> GetSolutionComponentsForSolution(Solution solution)
         {
+            var output = new List<MergedInSolutionComponent>(); ;
             if (solution != null)
             {
                 var typesAllowed = ComponentTypesSolutionMapping
                         .Where(k => k.Value == solution.UniqueName)
                         .Select(k => k.Key)
                         .ToList();
-                return SolutionComponents
-                        .Where(k => typesAllowed.IndexOf((int)k.Type) > -1)
-                        .ToList();
+                foreach (var type in typesAllowed)
+                {
+                    if (type.IndexOf("_")>-1)
+                    {
+                        output.AddRange(SolutionComponents
+                            .Where(k => k.Type == SolutionComponentBase.SolutionComponentType.WebResource)
+                            .Where(k=> ((WebResourceData)k.ObjectDefinition).WebResourceType.ToString() == type.Split('_')[1]));
+                    }
+                    else
+                    {
+                        output.AddRange(SolutionComponents.Where(k => ((int)k.Type).ToString() == type));
+                    }
+                }
+                //return SolutionComponents
+                //        .Where(k => typesAllowed.IndexOf(((int)k.Type).ToString()) > -1)
+                //        .ToList();
             }
-            return new List<MergedInSolutionComponent>();
+            return output;
         }
 
 
@@ -457,22 +473,45 @@ namespace SolutionManagerUI.ViewModels
             //TODO: set array of valid types = [1, 2, 3, 4, 5, 20, 21, etc...]
             List<string> solutionUniqueNames = new List<string>();
             List<Solution> solutions = new List<Solution>();
-            this.ComponentTypesSolutionMapping = new Dictionary<int, string>();
+            this.ComponentTypesSolutionMapping = new Dictionary<string, string>();
 
             for (int i = 1; i < 999; i++)
             {
-                var settingForThisComponent = settings.FirstOrDefault(k => k.Key == string.Format(FormatSuperSolutionSettingKeyName, i));
-                if (settingForThisComponent != null)
+                if (i != WebResourceType)
                 {
-                    var value = settingForThisComponent.Value;
-                    if (!this.ComponentTypesSolutionMapping.ContainsKey(i))
+                    var settingForThisComponent = settings.FirstOrDefault(k => k.Key == string.Format(FormatSuperSolutionSettingKeyName, i));
+                    if (settingForThisComponent != null)
                     {
-                        this.ComponentTypesSolutionMapping.Add(i, value);
-                    }
+                        var value = settingForThisComponent.Value;
+                        if (!this.ComponentTypesSolutionMapping.ContainsKey(i.ToString()))
+                        {
+                            this.ComponentTypesSolutionMapping.Add(i.ToString(), value);
+                        }
 
-                    if (solutionUniqueNames.IndexOf(value) < 0)
+                        if (solutionUniqueNames.IndexOf(value) < 0)
+                        {
+                            solutionUniqueNames.Add(settingForThisComponent.Value);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int j = 1; j < 12; j++) //Different types of webresources
                     {
-                        solutionUniqueNames.Add(settingForThisComponent.Value);
+                        var settingForThisComponent = settings.FirstOrDefault(k => k.Key == string.Format(FormatWebResourceSuperSolutionSettingKeyName, i, j));
+                        if (settingForThisComponent != null)
+                        {
+                            var value = settingForThisComponent.Value;
+                            if (!this.ComponentTypesSolutionMapping.ContainsKey($"{i}_{j}"))
+                            {
+                                this.ComponentTypesSolutionMapping.Add($"{i}_{j}", value);
+                            }
+
+                            if (solutionUniqueNames.IndexOf(value) < 0)
+                            {
+                                solutionUniqueNames.Add(settingForThisComponent.Value);
+                            }
+                        }
                     }
                 }
             }

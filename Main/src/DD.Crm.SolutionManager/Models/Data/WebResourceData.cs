@@ -8,7 +8,7 @@ namespace DD.Crm.SolutionManager.Models.Data
 {
     public class WebResourceData : BaseEntity
     {
-
+        public int WebResourceType { get; set; }
 
         public WebResourceData()
                    : base()

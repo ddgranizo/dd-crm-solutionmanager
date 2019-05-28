@@ -142,7 +142,9 @@ namespace DD.Crm.SolutionManager.Extensions
 
         public static WebResourceData ToWebResourceData(this Entity e)
         {
-            return GetGenericData<WebResourceData>(e);
+            WebResourceData webResource = GetGenericData<WebResourceData>(e);
+            webResource.WebResourceType = e.GetAttributeValue<OptionSetValue>("webresourcetype").Value;
+            return webResource;
         }
 
         public static WorkflowData ToWorkflowData(this Entity e)
