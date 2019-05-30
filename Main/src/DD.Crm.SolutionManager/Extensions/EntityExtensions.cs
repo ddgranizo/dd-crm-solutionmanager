@@ -168,6 +168,11 @@ namespace DD.Crm.SolutionManager.Extensions
             }
             return a;
         }
+        public static MergedInSolutionComponent ToMergedSolutionComponent(this Entity e)
+        {
+            var component = e.ToSolutionComponent();
+            return new MergedInSolutionComponent(component);
+        }
 
         public static SolutionComponentBase ToSolutionComponent(this Entity e)
         {
@@ -185,7 +190,7 @@ namespace DD.Crm.SolutionManager.Extensions
             s.ObjectId = e.GetParameter<Guid>(SolutionComponentBase.AttributeDefinitions.ObjectId);
             s.RootSolutionComponentId = e.GetParameter<Guid>(SolutionComponentBase.AttributeDefinitions.RootSolutionComponentId);
             s.SolutionId = e.GetParameter<EntityReference>(SolutionComponentBase.AttributeDefinitions.SolutionId);
-            s.Type = (SolutionComponentBase.SolutionComponentType)e.GetParameter<OptionSetValue>(SolutionComponentBase.AttributeDefinitions.Type).Value;
+            s.Type = (SolutionComponentType)e.GetParameter<OptionSetValue>(SolutionComponentBase.AttributeDefinitions.Type).Value;
             if (e.Attributes.Contains(SolutionComponentBase.AttributeDefinitions.RootComponentBehavior))
             {
                 s.RootComponentBehavior = (SolutionComponentBase.RootComponentBehaviorType)e.GetParameter<OptionSetValue>(SolutionComponentBase.AttributeDefinitions.RootComponentBehavior).Value;

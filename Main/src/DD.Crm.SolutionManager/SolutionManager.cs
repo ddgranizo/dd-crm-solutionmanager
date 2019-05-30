@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static DD.Crm.SolutionManager.Models.SolutionComponentBase;
 
 namespace DD.Crm.SolutionManager
 {
@@ -27,6 +28,51 @@ namespace DD.Crm.SolutionManager
             this._service = service;
         }
 
+
+        public void RemoveAggregatedSolution(Guid id)
+        {
+            CrmProvider.RemoveAggregatedSolution(_service, id);
+        }
+
+        public void RemoveWorkSolution(Guid id)
+        {
+            CrmProvider.RemoveWorkSolution(_service, id);
+        }
+
+        public void SetReadyWorkSolution(Guid id)
+        {
+            CrmProvider.UpdateWorkSolutionStatus(_service, id, WorkSolution.WorkSolutionStatus.ReadyToInt);
+        }
+
+        public void SetNotReadyWorkSolution(Guid id)
+        {
+            CrmProvider.UpdateWorkSolutionStatus(_service, id, WorkSolution.WorkSolutionStatus.Development);
+        }
+
+        public void AssignWorkSolutionToAggregatedSolution(Guid aggregatedSolutionId, Guid workSolutionId)
+        {
+            CrmProvider.AssignWorkSolutionToAggregatedSolution(_service, aggregatedSolutionId, workSolutionId);
+        }
+
+        public Guid CreateAggregatedSolution(string name, AggregatedSolution.AggregatedSolutionType type)
+        {
+            return CrmProvider.CreateAggregatedSolution(_service, name, type);
+        }
+
+        public Guid CreateWorkSolution(string name, string jira)
+        {
+            return CrmProvider.CreateWorkSolution(_service, name, jira);
+        }
+
+        public List<SolutionComponentBase> SearchComponent(SolutionComponentType type, string displayName)
+        {
+            return CrmProvider.SearchComponent(_service, type, displayName);
+        }
+
+        public void PublishAll()
+        {
+            CrmProvider.PublishAll(_service);
+        }
 
         public void ImportSolution(
            string path,
@@ -325,7 +371,7 @@ namespace DD.Crm.SolutionManager
             SolutionComponentBase component,
             List<MergedInSolutionComponent> mergedComponents)
         {
-            if (component.Type == SolutionComponentBase.SolutionComponentType.Entity
+            if (component.Type == SolutionComponentType.Entity
                 && component.RootComponentBehavior != null)
             {
                 MergedInSolutionComponent sameObjectId =

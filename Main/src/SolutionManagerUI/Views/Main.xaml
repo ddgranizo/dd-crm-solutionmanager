@@ -82,6 +82,12 @@
                         <MenuItem Header="Find why is not in"  Command="{Binding Source={StaticResource viewModel}, Path=FindReasonWhyComponentIsNotInCommand, Mode=OneWay}" />
                         <Separator></Separator>
                         <MenuItem Header="Find layers where component is"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
+                        <MenuItem Header="Search component"  Command="{Binding Source={StaticResource viewModel}, Path=SearchComponentCommand, Mode=OneWay}" />
+                    </MenuItem>
+                    <MenuItem Header="Environment">
+                        <MenuItem Header="Publish All"  Command="{Binding Source={StaticResource viewModel}, Path=PublishAllCommand, Mode=OneWay}" />
+                        <Separator></Separator>
+                        <MenuItem Header="Open in browser"  Command="{Binding Source={StaticResource viewModel}, Path=OpenEnvironmentInBrowserCommand, Mode=OneWay}" />
                     </MenuItem>
                 </Menu>
             </DockPanel>
@@ -118,10 +124,12 @@
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
-                                <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadAggregatedSolutionsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadAggregatedSolutionsCommand, Mode=OneWay}" >
                                     <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
                                 </Button>
-
+                                <Button Grid.Column="1"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create aggregated" Command="{Binding Source={StaticResource viewModel}, Path=CreateAggregatedSolutionCommand, Mode=OneWay}" >
+                                    <materialDesign:PackIcon Kind="Add" Width="15" Height="15"/>
+                                </Button>
                                 <Label Grid.Column="2" VerticalAlignment="Center">Filter:</Label>
                                 <TextBox Grid.Column="3" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
                                 <!--<Button Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Select solution(s)" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
@@ -155,6 +163,8 @@
                                                         <MenuItem Header="Check work solutions" Command="{Binding Source={StaticResource viewModel}, Path=CheckAggregatedSolutionsCommand, Mode=OneWay}" />
                                                         <Separator />
                                                         <MenuItem Header="Create solution from aggregated" Command="{Binding Source={StaticResource viewModel}, Path=MergeAggregatedSolutionsCommand, Mode=OneWay}" />
+                                                        <Separator />
+                                                        <MenuItem Header="Remove" Command="{Binding Source={StaticResource viewModel}, Path=RemoveAggregatedSolutionCommand, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
                                             </Grid>
@@ -203,6 +213,7 @@
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
@@ -212,10 +223,13 @@
                                 <Button Grid.Column="1"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Mark/Unmark all" Command="{Binding Source={StaticResource viewModel}, Path=MarkUnmarkAllWorkSolutionsCommand, Mode=OneWay}" >
                                     <materialDesign:PackIcon Kind="ArrowExpandAll" Width="15" Height="15"/>
                                 </Button>
+                                <Button Grid.Column="2"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create work solution" Command="{Binding Source={StaticResource viewModel}, Path=CreateWorkSolutionCommand, Mode=OneWay}" >
+                                    <materialDesign:PackIcon Kind="Add" Width="15" Height="15"/>
+                                </Button>
 
-                                <Label Grid.Column="3" VerticalAlignment="Center">Filter:</Label>
-                                <TextBox Grid.Column="4" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
-                                <Button Grid.Column="5" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                <Label Grid.Column="4" VerticalAlignment="Center">Filter:</Label>
+                                <TextBox Grid.Column="5" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                <Button Grid.Column="6" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="ArrowCollapseRight" Width="15" Height="15"/>
                                 </Button>
                             </Grid>
@@ -233,6 +247,8 @@
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="5" >
+                                                
+                                                
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="100"/>
@@ -244,6 +260,16 @@
                                                     <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
                                                 </Label>
                                                 <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="2"></TextBlock>
+
+                                                <Grid.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Set ready" Command="{Binding Source={StaticResource viewModel}, Path=SetReadyWorkSolutionCommand, Mode=OneWay}" />
+                                                        <MenuItem Header="Set not ready" Command="{Binding Source={StaticResource viewModel}, Path=SetNotReadyWorkSolutionCommand, Mode=OneWay}" />
+                                                        <Separator />
+                                                        <MenuItem Header="Remove" Command="{Binding Source={StaticResource viewModel}, Path=RemoveWorkSolutionCommand, Mode=OneWay}" />
+                                                    </ContextMenu>
+                                                </Grid.ContextMenu>
+                                                
                                             </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
@@ -324,6 +350,9 @@
                                                             <MenuItem Header="Export Managed" Command="{Binding Source={StaticResource viewModel}, Path=ExportManagedSolutionCommand, Mode=OneWay}" />
                                                             <MenuItem Header="Export Unmanaged" Command="{Binding Source={StaticResource viewModel}, Path=ExportUnmanagedSolutionCommand, Mode=OneWay}" />
                                                         </MenuItem>
+                                                        <Separator />
+                                                        <MenuItem Header="Components wich are only in this solution" Command="{Binding Source={StaticResource viewModel}, Path=CheckSolutionComponentsWichAreOnlyInSolutionCommand, Mode=OneWay}" />
+                                                        
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
                                             </Grid>

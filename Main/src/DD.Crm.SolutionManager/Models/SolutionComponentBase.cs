@@ -9,6 +9,33 @@ using System.Threading.Tasks;
 
 namespace DD.Crm.SolutionManager.Models
 {
+
+    public enum SolutionComponentType
+    {
+        Entity = 1,
+        Field = 2,
+        OptionSet = 9,
+        Relationship = 10,
+        EntityKey = 14,
+        Role = 20,
+        RolePrivilege = 21,
+        View = 26,
+        Workflow = 29,
+        EmailTemplate = 36,
+        Ribbon = 50,
+        Chart = 59,
+        Form = 60,
+        WebResource = 61,
+        Sitemap = 62,
+        ConnectionRole = 63,
+        HierarchyRule = 65,
+        App = 80,
+        PluginAssembly = 91,
+        PluginStep = 92,
+        RoutingRule = 150,
+        ConvertRule = 154,
+    }
+
     public class SolutionComponentBase
     {
 
@@ -39,31 +66,7 @@ namespace DD.Crm.SolutionManager.Models
             IncludeAsShellOnly = 2,
         }
 
-        public enum SolutionComponentType
-        {
-            Entity = 1,
-            Field = 2,
-            OptionSet = 9,
-            Relationship = 10,
-            EntityKey = 14,
-            Role = 20,
-            RolePrivilege = 21,
-            View = 26,
-            Workflow = 29,
-            EmailTemplate = 36,
-            Ribbon = 50,
-            Chart = 59,
-            Form = 60,
-            WebResource = 61,
-            Sitemap = 62,
-            ConnectionRole = 63,
-            HierarchyRule = 65,
-            App = 80,
-            PluginAssembly = 91,
-            PluginStep = 92,
-            RoutingRule = 150,
-            ConvertRule = 154,
-        }
+        
 
 
 

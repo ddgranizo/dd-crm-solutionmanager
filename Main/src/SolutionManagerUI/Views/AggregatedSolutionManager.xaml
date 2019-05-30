@@ -1,0 +1,89 @@
+﻿<Window x:Class="SolutionManagerUI.Views.AggregatedSolutionManager"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        
+        xmlns:vm="clr-namespace:SolutionManagerUI.ViewModels"
+        xmlns:conv="clr-namespace:SolutionManagerUI.Converters" 
+        xmlns:custom="clr-namespace:SolutionManagerUI.Controls"
+        
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal" 
+        TextOptions.TextRenderingMode="Auto"        
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Aggregated solution Manager" Height="300" Width="400">
+    <Grid x:Name="LayoutRoot"  Background="White" >
+        <Grid.Resources>
+            <vm:AggregatedSolutionManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:AggregatedSolutionManagerViewModel>
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
+
+        </Grid.Resources>
+
+
+
+        <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <materialDesign:DialogHost Grid.Column="0" Grid.ColumnSpan="2" IsOpen="{Binding IsDialogOpen}" Grid.RowSpan="3" Panel.ZIndex="1000">
+                <materialDesign:DialogHost.DialogContent>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="1" Text="{Binding MessageDialog}" />
+                    </Grid>
+                </materialDesign:DialogHost.DialogContent>
+            </materialDesign:DialogHost>
+
+
+
+            <Grid Grid.Column="0">
+                <GroupBox Header="Work solution parameters">
+                    <Grid>
+                        <Grid.ColumnDefinitions >
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+
+                        <Label Margin="4" Grid.Row="0" Grid.Column="0">Name:</Label>
+                        <TextBox Margin="4" Text="{Binding Name}" Grid.Row="0" Grid.Column="1" ></TextBox>
+
+                        <Label Margin="4" Grid.Row="1" Grid.Column="0">Type:</Label>
+                        <ComboBox Margin="4" ItemsSource="{Binding TypesCollection}" SelectedItem="{Binding CurrentType}" Grid.Row="1" Grid.Column="1" ></ComboBox>
+
+
+
+                        <Button Grid.Row="6" Grid.Column="1" HorizontalAlignment="Right"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create" Command="{Binding Source={StaticResource viewModel}, Path=CreateAggregatedCommand, Mode=OneWay}">
+                            <materialDesign:PackIcon Kind="Play" Width="15" Height="15"/>
+                        </Button>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </Grid>
+
+    </Grid>
+</Window>

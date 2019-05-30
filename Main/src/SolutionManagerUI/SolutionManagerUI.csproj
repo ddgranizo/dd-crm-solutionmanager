@@ -127,6 +127,8 @@
     <Compile Include="Events\ThreadManagerScheduledTask.cs" />
     <Compile Include="Events\ThreadManagerScheduledTaskDescription.cs" />
     <Compile Include="Events\ThreadTaskEventArgs.cs" />
+    <Compile Include="Models\AggregatedSolutionTypeData.cs" />
+    <Compile Include="Models\ComponentTypeData.cs" />
     <Compile Include="Models\CrmConnection.cs" />
     <Compile Include="Models\Setting.cs" />
     <Compile Include="Providers\CrmDataProvider.cs" />
@@ -139,7 +141,10 @@
     <Compile Include="Utilities\System32.cs" />
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
+    <Compile Include="ViewModels\WorkSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
+    <Compile Include="ViewModels\AggregatedSolutionManagerViewModel.cs" />
+    <Compile Include="ViewModels\SearchComponentManagerViewModel.cs" />
     <Compile Include="ViewModels\ImportSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\CloneSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\SuperSolutionsManagerViewModel.cs" />
@@ -148,6 +153,15 @@
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\SolutionComponentViewModel.cs" />
+    <Compile Include="Views\WorkSolutionManager.xaml.cs">
+      <DependentUpon>WorkSolutionManager.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\AggregatedSolutionManager.xaml.cs">
+      <DependentUpon>AggregatedSolutionManager.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\SearchComponentManager.xaml.cs">
+      <DependentUpon>SearchComponentManager.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ImportSolutionManager.xaml.cs">
       <DependentUpon>ImportSolutionManager.xaml</DependentUpon>
     </Compile>
@@ -176,6 +190,18 @@
     <Page Include="Controls\SolutionComponent.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\WorkSolutionManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\AggregatedSolutionManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SearchComponentManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ImportSolutionManager.xaml">
       <Generator>MSBuild:Compile</Generator>

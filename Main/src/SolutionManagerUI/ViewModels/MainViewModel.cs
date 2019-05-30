@@ -31,7 +31,8 @@ namespace SolutionManagerUI.ViewModels
 
     public class MainViewModel : BaseViewModel
     {
-
+        public const string DefaultSolutionUniqueName = "Default";
+        public const string ActiveSolutionUniqueName = "Active";
         public const string DefaultExportPathSettingKey = "SOLUTION_OUTPUT_DIRECTORY";
 
         public event OnRequetedSelectionListHandler OnRequetedSelectAllWorkSolutions;
@@ -146,6 +147,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _selectedWorkSolution = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedWorkSolution"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -210,6 +212,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _selectedAggregatedSolution = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedAggregatedSolution"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -1072,9 +1075,91 @@ namespace SolutionManagerUI.ViewModels
                     });
                 }, string.Empty, _cleanSolutionTaskId);
             }
-
-
         }
+
+        private Guid _checkSolutionComponentsWichAreOnlyInSolutionTaskId = Guid.NewGuid();
+        private void CheckSolutionComponentsWichAreOnlyInSolution(Solution solution)
+        {
+            SetDialog($"Calculating components wich are only in this solution...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var isError = false;
+                var errorMessage = string.Empty;
+                var componentsWichAreOnlyInThisSolution = new List<MergedInSolutionComponent>();
+                try
+                {
+                    var solutionComponents =
+                        CurrentSolutionManager
+                            .GetMergedSolutionComponents(new List<Solution>() { solution }, true);
+
+                    foreach (var component in solutionComponents)
+                    {
+                        var areInSolutions =
+                            CurrentSolutionManager
+                                .GetSolutionWhereComponentIs(component.ObjectId)
+                                .Where(k => k.UniqueName != DefaultSolutionUniqueName)
+                                .Where(k => k.UniqueName != ActiveSolutionUniqueName)
+                                .ToList();
+                        if (areInSolutions.Count == 1)
+                        {
+                            componentsWichAreOnlyInThisSolution.Add(component);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        SolutionComponents = componentsWichAreOnlyInThisSolution;
+                    }
+                    UnsetDialog();
+                });
+            }, string.Empty, _checkSolutionComponentsWichAreOnlyInSolutionTaskId);
+        }
+
+
+        private Guid _publishAllTaskId = Guid.NewGuid();
+        private void PublishAll()
+        {
+            SetDialog($"Publishing all customizations...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var isError = false;
+                var errorMessage = string.Empty;
+                try
+                {
+                    CurrentSolutionManager.PublishAll();
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+
+                    }
+                    UnsetDialog();
+                });
+            }, string.Empty, _publishAllTaskId);
+        }
+
+
         private static string GetPathWithLastSlash(string path)
         {
             if (path.Last() != '\\' && path.Last() != '/')
@@ -1131,7 +1216,370 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("ImportSolutionCommand", ImportSolutionCommand);
             Commands.Add("CleanSolutionCommand", CleanSolutionCommand);
 
+            Commands.Add("CheckSolutionComponentsWichAreOnlyInSolutionCommand", CheckSolutionComponentsWichAreOnlyInSolutionCommand);
+            Commands.Add("PublishAllCommand", PublishAllCommand);
+            Commands.Add("OpenEnvironmentInBrowserCommand", OpenEnvironmentInBrowserCommand);
+
+            Commands.Add("SearchComponentCommand", SearchComponentCommand);
+
+            Commands.Add("CreateAggregatedSolutionCommand", CreateAggregatedSolutionCommand);
+
+            Commands.Add("CreateWorkSolutionCommand", CreateWorkSolutionCommand);
+
+            Commands.Add("RemoveWorkSolutionCommand", RemoveWorkSolutionCommand);
+            Commands.Add("RemoveAggregatedSolutionCommand", RemoveAggregatedSolutionCommand);
+
+            Commands.Add("SetReadyWorkSolutionCommand", SetReadyWorkSolutionCommand);
+            Commands.Add("SetNotReadyWorkSolutionCommand", SetNotReadyWorkSolutionCommand);
         }
+
+
+        private ICommand _setNotReadyWorkSolutionCommand = null;
+        public ICommand SetNotReadyWorkSolutionCommand
+        {
+            get
+            {
+                if (_setNotReadyWorkSolutionCommand == null)
+                {
+                    _setNotReadyWorkSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetNotReadyWorkSolution(SelectedWorkSolution.Id);
+                            ICommand c = ReloadWorkSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedWorkSolution != null;
+
+                    });
+                }
+                return _setNotReadyWorkSolutionCommand;
+            }
+
+        }
+
+        private ICommand _setReadyWorkSolutionCommand = null;
+        public ICommand SetReadyWorkSolutionCommand
+        {
+            get
+            {
+                if (_setReadyWorkSolutionCommand == null)
+                {
+                    _setReadyWorkSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetReadyWorkSolution(SelectedWorkSolution.Id);
+                            ICommand c = ReloadWorkSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedWorkSolution != null;
+
+                    });
+                }
+                return _setReadyWorkSolutionCommand;
+            }
+
+        }
+
+
+        private ICommand _removeAggregatedSolutionCommand = null;
+        public ICommand RemoveAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_removeAggregatedSolutionCommand == null)
+                {
+                    _removeAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var response = MessageBox.Show($"Are you sure you want to remove the aggregated solution '{SelectedAggregatedSolution.Name}? This operation cannot be undone!", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                            if (response == MessageBoxResult.Yes)
+                            {
+                                CurrentSolutionManager.RemoveAggregatedSolution(SelectedAggregatedSolution.Id);
+                                ICommand c = ReloadAggregatedSolutionsCommand;
+                                if (c.CanExecute(null))
+                                {
+                                    c.Execute(null);
+                                }
+                            }
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _removeAggregatedSolutionCommand;
+            }
+
+
+        }
+        private ICommand _removeWorkSolutionCommand = null;
+        public ICommand RemoveWorkSolutionCommand
+        {
+            get
+            {
+                if (_removeWorkSolutionCommand == null)
+                {
+                    _removeWorkSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var response =   MessageBox.Show($"Are you sure you want to remove the work solution '{SelectedWorkSolution.Name}? This operation cannot be undone!", "Warning!", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                            if (response == MessageBoxResult.Yes)
+                            {
+                                CurrentSolutionManager.RemoveWorkSolution(SelectedWorkSolution.Id);
+                                ICommand c = ReloadWorkSolutionsCommand;
+                                if (c.CanExecute(null))
+                                {
+                                    c.Execute(null);
+                                }
+                            }
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedWorkSolution != null;
+
+                    });
+                }
+                return _removeWorkSolutionCommand;
+            }
+        }
+
+
+        private ICommand _createWorkSolutionCommand = null;
+        public ICommand CreateWorkSolutionCommand
+        {
+            get
+            {
+                if (_createWorkSolutionCommand == null)
+                {
+                    _createWorkSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            WorkSolutionManager man = new WorkSolutionManager(
+                                Service,
+                                CurrentCrmConnection,
+                                CurrentSolutionManager,
+                                Settings,
+                                SelectedAggregatedSolution);
+                            man.ShowDialog();
+
+                            ICommand c = ReloadWorkSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _createWorkSolutionCommand;
+            }
+        }
+
+
+        private ICommand _createAggregatedSolutionCommand = null;
+        public ICommand CreateAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_createAggregatedSolutionCommand == null)
+                {
+                    _createAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            AggregatedSolutionManager man = new AggregatedSolutionManager(
+                                Service,
+                                CurrentCrmConnection,
+                                CurrentSolutionManager,
+                                Settings);
+                            man.ShowDialog();
+
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _createAggregatedSolutionCommand;
+            }
+        }
+
+        private ICommand _searchComponentCommand = null;
+        public ICommand SearchComponentCommand
+        {
+            get
+            {
+                if (_searchComponentCommand == null)
+                {
+                    _searchComponentCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            SearchComponentManager man = new SearchComponentManager(
+                                Service,
+                                CurrentCrmConnection,
+                                CurrentSolutionManager,
+                                Settings);
+                            man.ShowDialog();
+                            this.SolutionComponents =
+                                man.GetViewModel()
+                                .SearchedComponents
+                                .Select(k => new MergedInSolutionComponent(k))
+                                .ToList();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _searchComponentCommand;
+            }
+        }
+
+
+        private ICommand _openEnvironmentInBrowserCommand = null;
+        public ICommand OpenEnvironmentInBrowserCommand
+        {
+            get
+            {
+                if (_openEnvironmentInBrowserCommand == null)
+                {
+                    _openEnvironmentInBrowserCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var url = CurrentCrmConnection.Endpoint;
+                            Process.Start("chrome.exe", url);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _openEnvironmentInBrowserCommand;
+            }
+        }
+
+
+
+        private ICommand _publishAllCommand = null;
+        public ICommand PublishAllCommand
+        {
+            get
+            {
+                if (_publishAllCommand == null)
+                {
+                    _publishAllCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            PublishAll();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _publishAllCommand;
+            }
+        }
+
+
+
+
+        private ICommand _checkSolutionComponentsWichAreOnlyInSolutionCommand = null;
+        public ICommand CheckSolutionComponentsWichAreOnlyInSolutionCommand
+        {
+            get
+            {
+                if (_checkSolutionComponentsWichAreOnlyInSolutionCommand == null)
+                {
+                    _checkSolutionComponentsWichAreOnlyInSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CheckSolutionComponentsWichAreOnlyInSolution(SelectedSolution);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+
+                    });
+                }
+                return _checkSolutionComponentsWichAreOnlyInSolutionCommand;
+            }
+        }
+
 
         private ICommand _cleanSolutionCommand = null;
         public ICommand CleanSolutionCommand

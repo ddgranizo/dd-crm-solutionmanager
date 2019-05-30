@@ -424,17 +424,17 @@ namespace SolutionManagerUI.ViewModels
 
         private List<MergedInSolutionComponent> GetUnasiggnedSolutionComponents()
         {
-            //TODO: it doesn't work well with the change of webresources. Fixit!
-            if (SelectedSuperSolution != null)
+            var affectedSolutions = GetAffectedSuperSolutions();
+            var assignedComponents = new List<MergedInSolutionComponent>();
+
+            foreach (var solution in affectedSolutions)
             {
-                var typesNotAllowed = ComponentTypesSolutionMapping
-                        .Select(k => k.Key)
-                        .ToList();
-                return SolutionComponents
-                        .Where(k => typesNotAllowed.IndexOf(((int)k.Type).ToString()) < 0)
-                        .ToList();
+                assignedComponents.AddRange(GetSolutionComponentsForSolution(solution));
             }
-            return new List<MergedInSolutionComponent>();
+            return
+                SolutionComponents
+                    .Where(k => assignedComponents.FirstOrDefault(l => l.ObjectId == k.ObjectId) == null)
+                    .ToList();
         }
 
 
@@ -452,7 +452,7 @@ namespace SolutionManagerUI.ViewModels
                     if (type.IndexOf("_")>-1)
                     {
                         output.AddRange(SolutionComponents
-                            .Where(k => k.Type == SolutionComponentBase.SolutionComponentType.WebResource)
+                            .Where(k => k.Type == SolutionComponentType.WebResource)
                             .Where(k=> ((WebResourceData)k.ObjectDefinition).WebResourceType.ToString() == type.Split('_')[1]));
                     }
                     else

@@ -15,11 +15,317 @@ using System.Threading.Tasks;
 using Newtonsoft;
 using System.IO;
 using System.ServiceModel;
+using static DD.Crm.SolutionManager.Models.SolutionComponentBase;
 
 namespace DD.Crm.SolutionManager.Utilities
 {
     public static class CrmProvider
     {
+
+        public static void RemoveAggregatedSolution(IOrganizationService service, Guid workSolutionid)
+        {
+            service.Delete(AggregatedSolution.EntityLogicalName, workSolutionid);
+        }
+
+        public static void RemoveWorkSolution(IOrganizationService service, Guid workSolutionid)
+        {
+            service.Delete(WorkSolution.EntityLogicalName, workSolutionid);
+        }
+
+        public static void UpdateWorkSolutionStatus(IOrganizationService service, Guid workSolutionid, WorkSolution.WorkSolutionStatus status)
+        {
+            Entity e = new Entity(WorkSolution.EntityLogicalName);
+            e.Id = workSolutionid;
+            e[WorkSolution.AttributeDefinitions.Status] = new OptionSetValue((int)status);
+            service.Update(e);
+        }
+
+
+        public static void AssignWorkSolutionToAggregatedSolution(IOrganizationService service, Guid aggregatedSolutionId, Guid workSolutionId)
+        {
+            service.Associate(
+                AggregatedSolution.EntityLogicalName,
+                aggregatedSolutionId,
+                new Relationship(WorkSolution.IntersectionEntitySchemaName),
+                new EntityReferenceCollection() { new EntityReference(WorkSolution.EntityLogicalName, workSolutionId) });
+        }
+
+        public static Guid CreateWorkSolution(IOrganizationService service, string name, string jira)
+        {
+            Entity e = new Entity(WorkSolution.EntityLogicalName);
+            e[WorkSolution.AttributeDefinitions.Name] = name;
+            e[WorkSolution.AttributeDefinitions.Jira] = jira;
+            return service.Create(e);
+        }
+
+        public static Guid CreateAggregatedSolution(IOrganizationService service, string name, AggregatedSolution.AggregatedSolutionType type)
+        {
+            Entity e = new Entity(AggregatedSolution.EntityLogicalName);
+            e[AggregatedSolution.AttributeDefinitions.Name] = name;
+            e[AggregatedSolution.AttributeDefinitions.Type] = new OptionSetValue((int)type);
+            return service.Create(e);
+        }
+
+        public static List<SolutionComponentBase> SearchComponent
+            (IOrganizationService service, SolutionComponentType type, string value)
+        {
+            List<SolutionComponentBase> components = new List<SolutionComponentBase>();
+            List<Guid> componentsId = new List<Guid>();
+            if (type == SolutionComponentType.App)
+            {
+                componentsId = GetAppsWithName(service, value);
+            }
+            else if (type == SolutionComponentType.Chart)
+            {
+                componentsId = GetChartWithName(service, value);
+            }
+            else if (type == SolutionComponentType.ConnectionRole)
+            {
+                componentsId = GetConnectionRoleWithName(service, value);
+            }
+            else if (type == SolutionComponentType.ConvertRule)
+            {
+                componentsId = GetConvertRuleWithName(service, value);
+            }
+            else if (type == SolutionComponentType.EmailTemplate)
+            {
+                componentsId = GetEmailTemplateWithName(service, value);
+            }
+            else if (type == SolutionComponentType.Form)
+            {
+                componentsId = GetFormWithName(service, value);
+            }
+            else if (type == SolutionComponentType.HierarchyRule)
+            {
+                componentsId = GetHierarchyRuleWithName(service, value);
+            }
+            else if (type == SolutionComponentType.PluginAssembly)
+            {
+                componentsId = GetPlugginAssemblyWithName(service, value);
+            }
+            else if (type == SolutionComponentType.PluginStep)
+            {
+                componentsId = GetPlugginStepWithName(service, value);
+            }
+            else if (type == SolutionComponentType.Ribbon)
+            {
+                componentsId = GetRibbonWithName(service, value);
+            }
+            else if (type == SolutionComponentType.Role)
+            {
+                componentsId = GetRoleWithName(service, value);
+            }
+            else if (type == SolutionComponentType.RolePrivilege)
+            {
+                componentsId = GetRolePrivilegeWithName(service, value);
+            }
+            else if (type == SolutionComponentType.RoutingRule)
+            {
+                componentsId = GetRoutingRuleWithName(service, value);
+            }
+            else if (type == SolutionComponentType.Sitemap)
+            {
+                componentsId = GetSitemapWithName(service, value);
+            }
+            else if (type == SolutionComponentType.View)
+            {
+                componentsId = GetViewWithName(service, value);
+            }
+            else if (type == SolutionComponentType.WebResource)
+            {
+                componentsId = GetWebResourceWithName(service, value);
+            }
+            else if (type == SolutionComponentType.Workflow)
+            {
+                componentsId = GetWorkflowWithName(service, value);
+            }
+            return componentsId.Count>0 ? GetComponentsWithId(service, componentsId) : new List<SolutionComponentBase>();
+        }
+
+
+
+
+
+        private static List<Guid> GetWorkflowWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new WorkflowData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+
+        private static List<Guid> GetWebResourceWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new WebResourceData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetViewWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new ViewData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetSitemapWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new SiteMapData().EntityLogicalName,
+                new List<string>() { "sitemapname", "sitemapnameunique" },
+                value);
+        }
+
+
+        private static List<Guid> GetRoutingRuleWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new RoutingRuleData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetRolePrivilegeWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new RolePrivilegeData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+
+        private static List<Guid> GetRoleWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new RoleData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetRibbonWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new RibbonData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetPlugginStepWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new PluginStepData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetPlugginAssemblyWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new PluginAssemblyData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetHierarchyRuleWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new HierarchyRuleData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetFormWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new FormData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetEmailTemplateWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new EmailTemplateData().EntityLogicalName,
+                new List<string>() { "template" },
+                value);
+        }
+
+
+        private static List<Guid> GetConvertRuleWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new ConvertRuleData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetConnectionRoleWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new ConnectionRoleData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetChartWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new ChartData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetAppsWithName(IOrganizationService service, string value)
+        {
+            return GetComponentWithName(
+                service,
+                new AppData().EntityLogicalName,
+                new List<string>() { "name" },
+                value);
+        }
+
+        private static List<Guid> GetComponentWithName(IOrganizationService service, string entityLogicalName, List<string> attributes, string value)
+        {
+            QueryExpression qe = new QueryExpression(entityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            FilterExpression fe = new FilterExpression(LogicalOperator.Or);
+            foreach (var attribute in attributes)
+            {
+                fe.AddCondition(new ConditionExpression(attribute, ConditionOperator.BeginsWith, value));
+            }
+            qe.Criteria = fe;
+            var entities = service.RetrieveMultiple(qe)
+                                 .Entities;
+            return entities
+                .Select(k => { return k.Id; })
+                .ToList();
+        }
+
+        public static void PublishAll(IOrganizationService service)
+        {
+            PublishAllXmlRequest req = new PublishAllXmlRequest();
+            service.Execute(req);
+        }
+
         public static void ImportSolution(
                 IOrganizationService service,
                 byte[] data,
@@ -166,26 +472,39 @@ namespace DD.Crm.SolutionManager.Utilities
             return newSolution.Id;
         }
 
-
-
-        public static List<Solution> GetSolutionsWhereComponentIs(IOrganizationService service, Guid componentId)
+        public static List<Solution> GetSolutionsWhereComponentIs(IOrganizationService service, List<Guid> componentIds)
         {
-            QueryExpression qe = new QueryExpression(SolutionComponentBase.EntityLogicalName);
-            FilterExpression fe = new FilterExpression();
-            fe.AddCondition(SolutionComponentBase.AttributeDefinitions.ObjectId, ConditionOperator.Equal, componentId);
-            qe.Criteria = fe;
-            qe.ColumnSet = new ColumnSet(true);
-            var solutionList = service.RetrieveMultiple(qe)
-                                 .Entities;
+            var solutionList = GetComponentsWithId(service, componentIds);
 
             List<Guid> solutionIds = new List<Guid>();
             foreach (var item in solutionList)
             {
-                var idRef = item.GetAttributeValue<EntityReference>(Solution.AttributeDefinitions.Id);
-                var id = idRef.Id;
+                var id = item.SolutionId.Id;
                 solutionIds.Add(id);
             }
             return GetSolutions(service, solutionIds);
+        }
+
+
+        public static List<SolutionComponentBase> GetComponentsWithId(IOrganizationService service, List<Guid> componentIds)
+        {
+            QueryExpression qe = new QueryExpression(SolutionComponentBase.EntityLogicalName);
+            FilterExpression fe = new FilterExpression(LogicalOperator.Or);
+            foreach (var id in componentIds)
+            {
+                fe.AddCondition(SolutionComponentBase.AttributeDefinitions.ObjectId, ConditionOperator.Equal, id);
+            }
+            qe.Criteria = fe;
+            qe.ColumnSet = new ColumnSet(true);
+            return service.RetrieveMultiple(qe)
+                                 .Entities
+                                 .Select(k => k.ToSolutionComponent())
+                                 .ToList();
+        }
+
+        public static List<Solution> GetSolutionsWhereComponentIs(IOrganizationService service, Guid componentId)
+        {
+            return GetSolutionsWhereComponentIs(service, new List<Guid>() { componentId });
         }
 
         public static Solution CreateSolution(
@@ -229,7 +548,7 @@ namespace DD.Crm.SolutionManager.Utilities
                 AddRequiredComponents = false
             };
 
-            if (component.Type == SolutionComponentBase.SolutionComponentType.Entity)
+            if (component.Type == SolutionComponentType.Entity)
             {
                 addReq.DoNotIncludeSubcomponents =
                     component.RootComponentBehavior == SolutionComponentBase.RootComponentBehaviorType.DoNotIncludeSubcomponents
@@ -311,7 +630,7 @@ namespace DD.Crm.SolutionManager.Utilities
             RetrieveEntityRequest attributeRequest = new RetrieveEntityRequest
             {
                 MetadataId = objectId,
-                RetrieveAsIfPublished = true
+                RetrieveAsIfPublished = true,
             };
             RetrieveEntityResponse attributeResponse =
                 (RetrieveEntityResponse)service.Execute(attributeRequest);
@@ -459,123 +778,123 @@ namespace DD.Crm.SolutionManager.Utilities
         public static object RetrieveObjectDefinition(IOrganizationService service, SolutionComponentBase component)
         {
             var componentId = component.ObjectId;
-            if (component.Type == SolutionComponentBase.SolutionComponentType.Entity)
+            if (component.Type == SolutionComponentType.Entity)
             {
                 return GetEntityMetadata(service, componentId);
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Field)
+            else if (component.Type == SolutionComponentType.Field)
             {
                 return GetAttributeMetadata(service, component.ParentSolutionComponent.LogicalName, componentId);
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Relationship)
+            else if (component.Type == SolutionComponentType.Relationship)
             {
                 return GetRelationshipMetadata(service, componentId);
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.OptionSet)
+            else if (component.Type == SolutionComponentType.OptionSet)
             {
                 return GetOptionSetMetadata(service, componentId);
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.EntityKey)
+            else if (component.Type == SolutionComponentType.EntityKey)
             {
                 return GetEntityKeyMetadata(service, component.ParentSolutionComponent.LogicalName, componentId);
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Role)
+            else if (component.Type == SolutionComponentType.Role)
             {
                 var logicalName = new RoleData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToRoleData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.RolePrivilege)
+            else if (component.Type == SolutionComponentType.RolePrivilege)
             {
                 var logicalName = new RolePrivilegeData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToRolePrivilegeData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.View)
+            else if (component.Type == SolutionComponentType.View)
             {
                 var logicalName = new ViewData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToViewData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Workflow)
+            else if (component.Type == SolutionComponentType.Workflow)
             {
                 var logicalName = new WorkflowData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToWorkflowData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.EmailTemplate)
+            else if (component.Type == SolutionComponentType.EmailTemplate)
             {
                 var logicalName = new EmailTemplateData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToEmailTemplateData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Ribbon)
+            else if (component.Type == SolutionComponentType.Ribbon)
             {
                 var logicalName = new RibbonData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToRibbonData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Chart)
+            else if (component.Type == SolutionComponentType.Chart)
             {
                 var logicalName = new ChartData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToChartData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Form)
+            else if (component.Type == SolutionComponentType.Form)
             {
                 var logicalName = new FormData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToFormData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.WebResource)
+            else if (component.Type == SolutionComponentType.WebResource)
             {
                 var logicalName = new WebResourceData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToWebResourceData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.Sitemap)
+            else if (component.Type == SolutionComponentType.Sitemap)
             {
                 var logicalName = new SiteMapData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToSiteMap();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.ConnectionRole)
+            else if (component.Type == SolutionComponentType.ConnectionRole)
             {
                 var logicalName = new ConnectionRoleData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToConnectionRoleData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.HierarchyRule)
+            else if (component.Type == SolutionComponentType.HierarchyRule)
             {
                 var logicalName = new HierarchyRuleData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToHierarchyRuleData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.App)
+            else if (component.Type == SolutionComponentType.App)
             {
                 var logicalName = new AppData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToAppData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.PluginAssembly)
+            else if (component.Type == SolutionComponentType.PluginAssembly)
             {
                 var logicalName = new PluginAssemblyData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToPluginAssemblyData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.PluginStep)
+            else if (component.Type == SolutionComponentType.PluginStep)
             {
                 var logicalName = new PluginStepData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToPluginStepData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.RoutingRule)
+            else if (component.Type == SolutionComponentType.RoutingRule)
             {
                 var logicalName = new RoutingRuleData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)
                         .ToRoutingRuleData();
             }
-            else if (component.Type == SolutionComponentBase.SolutionComponentType.ConvertRule)
+            else if (component.Type == SolutionComponentType.ConvertRule)
             {
                 var logicalName = new ConvertRuleData().EntityLogicalName;
                 return GetGenericData(service, logicalName, componentId)

@@ -9,6 +9,7 @@ namespace DD.Crm.SolutionManager.Models
 
     public class WorkSolution
     {
+        public const string IntersectionEntitySchemaName = "alm_workersolution_solutionaggregator";
         public const string EntityLogicalName = "alm_workersolution";
 
         public enum WorkSolutionStatus
