@@ -5,6 +5,7 @@ using Microsoft.Xrm.Sdk;
 using SolutionManagerUI.Commands;
 using SolutionManagerUI.Models;
 using SolutionManagerUI.Providers;
+using SolutionManagerUI.Services;
 using SolutionManagerUI.Utilities;
 using SolutionManagerUI.Utilities.Threads;
 using SolutionManagerUI.ViewModels.Base;
@@ -207,6 +208,8 @@ namespace SolutionManagerUI.ViewModels
 
         public List<Setting> Settings { get; set; }
 
+
+        public BlobStorageService BlobService { get; set; }
         public void Initialize(
             Window window,
             IOrganizationService service,
@@ -224,6 +227,7 @@ namespace SolutionManagerUI.ViewModels
             SetSuperSolutions(service, settings);
             this.Settings = settings;
             IsAggregatedMode = false;
+            this.BlobService = new BlobStorageService(settings);
             if (aggregatedSolution != null)
             {
                 IsAggregatedMode = true;
@@ -301,6 +305,11 @@ namespace SolutionManagerUI.ViewModels
             var fullPath = string.Format("{0}{1}", path, fileName);
             SetDialog($"Exporting solution '{solution.UniqueName}' managed={managed}...");
             CurrentSolutionManager.ExportSolution(solution.UniqueName, fullPath, managed);
+            if (BlobService.IsEnabledBlobStorage())
+            {
+                SetDialog($"Uploading to BlobStorage '{solution.UniqueName}' managed={managed}...");
+                BlobService.Upload(solution.UniqueName, fullPath);
+            }
         }
 
         private void CleanAndMergeSourceSolutions(List<Solution> affectedSuperSolutions, Dictionary<string, string> mappings)

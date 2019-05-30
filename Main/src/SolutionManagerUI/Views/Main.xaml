@@ -74,7 +74,10 @@
                         <MenuItem Header="Solutions" Command="{Binding Source={StaticResource viewModel}, Path=SetSolutionsModeCommand, Mode=OneWay}" />
                     </MenuItem>
                     <MenuItem Header="Solution">
-                        <MenuItem Header="Import solution"  Command="{Binding Source={StaticResource viewModel}, Path=ImportSolutionCommand, Mode=OneWay}" />
+                        <MenuItem Header="Import solution" >
+                            <MenuItem Header="From file"  Command="{Binding Source={StaticResource viewModel}, Path=ImportSolutionFromFileCommand, Mode=OneWay}" />
+                            <MenuItem Header="From blob storage"  Command="{Binding Source={StaticResource viewModel}, Path=ImportSolutionFromBlobCommand, Mode=OneWay}" />
+                        </MenuItem>
                         <Separator />
                         <MenuItem Header="Find empty solutions"  Command="{Binding Source={StaticResource viewModel}, Path=FindEmptySolutionsCommand, Mode=OneWay}" />
                     </MenuItem>
@@ -157,7 +160,7 @@
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
                                                 <TextBlock Grid.Column="1" Text="{Binding Name}"></TextBlock>
-                                                
+
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Check work solutions" Command="{Binding Source={StaticResource viewModel}, Path=CheckAggregatedSolutionsCommand, Mode=OneWay}" />
@@ -247,15 +250,15 @@
                                     <ListView.ItemTemplate>
                                         <DataTemplate>
                                             <Grid Margin="5" >
-                                                
-                                                
+
+
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="100"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
-                                                
+
                                                 <Label Width="100" Grid.Column="1"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource WorkSolutionStatusToBackgroundConverter}}" >
                                                     <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
                                                 </Label>
@@ -269,7 +272,7 @@
                                                         <MenuItem Header="Remove" Command="{Binding Source={StaticResource viewModel}, Path=RemoveWorkSolutionCommand, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
-                                                
+
                                             </Grid>
                                         </DataTemplate>
                                     </ListView.ItemTemplate>
@@ -352,7 +355,7 @@
                                                         </MenuItem>
                                                         <Separator />
                                                         <MenuItem Header="Components which are only in this solution" Command="{Binding Source={StaticResource viewModel}, Path=CheckSolutionComponentsWichAreOnlyInSolutionCommand, Mode=OneWay}" />
-                                                        
+
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
                                             </Grid>
@@ -460,7 +463,7 @@
                                                         <MenuItem Header="Find layers where component is"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
-                                                
+
                                             </Grid>
 
                                         </DataTemplate>

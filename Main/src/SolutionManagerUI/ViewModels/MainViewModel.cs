@@ -5,6 +5,7 @@ using Microsoft.Xrm.Sdk;
 using SolutionManagerUI.Commands;
 using SolutionManagerUI.Models;
 using SolutionManagerUI.Providers;
+using SolutionManagerUI.Services;
 using SolutionManagerUI.Utilities;
 using SolutionManagerUI.Utilities.Threads;
 using SolutionManagerUI.ViewModels.Base;
@@ -34,6 +35,7 @@ namespace SolutionManagerUI.ViewModels
         public const string DefaultSolutionUniqueName = "Default";
         public const string ActiveSolutionUniqueName = "Active";
         public const string DefaultExportPathSettingKey = "SOLUTION_OUTPUT_DIRECTORY";
+        
 
         public event OnRequetedSelectionListHandler OnRequetedSelectAllWorkSolutions;
         public event OnRequetedSelectionListHandler OnRequetedUnselectAllWorkSolutions;
@@ -538,6 +540,7 @@ namespace SolutionManagerUI.ViewModels
                 RaiseCanExecuteChanged();
                 if (CurrentSolutionManager != null && OnLoadCommand != null)
                 {
+                    SetCrmTemplate(CurrentCrmConnection);
                     ICommand c = OnLoadCommand;
                     if (c.CanExecute(null))
                     {
@@ -604,9 +607,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _connections = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Connections"));
-
                 UpdateListToCollection(value, ConnectionsCollection);
-
             }
         }
 
@@ -642,7 +643,7 @@ namespace SolutionManagerUI.ViewModels
                 Service = null;
                 if (value != null)
                 {
-                    SetCrmTemplate(value);
+                    
                     SetNewOrganizationService();
                 }
                 RaiseCanExecuteChanged();
@@ -660,6 +661,8 @@ namespace SolutionManagerUI.ViewModels
             }
             return value;
         }
+
+        public BlobStorageService BlobService { get; set; }
 
         private void SetNewOrganizationService()
         {
@@ -817,11 +820,15 @@ namespace SolutionManagerUI.ViewModels
             RegisterCommands();
             IsSolutionMode = true;
             OnLoadCommand = InitialReloadCommand;
-
+            BlobService = new BlobStorageService(this.Settings);
         }
 
         private void EmptyContext(bool restartSolutionManager)
         {
+            if (CurrentCrmConnection != null)
+            {
+                CurrentCrmConnection = null;
+            }
             SelectedWorkSolution = null;
             WorkSolutions = null;
             SelectedAggregatedSolution = null;
@@ -839,32 +846,20 @@ namespace SolutionManagerUI.ViewModels
 
         private static void SetCrmTemplate(CrmConnection connection)
         {
-            var theme = string.Empty;
-            if (connection.Color == CrmColor.Black)
-            {
-                theme = "Grey";
-            }
-            else if (connection.Color == CrmColor.Brown)
-            {
-                theme = "Brown";
-            }
-            else if (connection.Color == CrmColor.Orange)
-            {
-                theme = "Orange";
-            }
-            else if (connection.Color == CrmColor.Green)
-            {
-                theme = "Green";
-            }
-            else if (connection.Color == CrmColor.Blue)
-            {
-                theme = "LightBlue";
-            }
+            var theme = connection.ThemeColor;
             if (!string.IsNullOrEmpty(theme))
             {
-                System.Windows.Application.Current.Resources.MergedDictionaries
+                try
+                {
+                    System.Windows.Application.Current.Resources.MergedDictionaries
                     .Add(new ResourceDictionary()
                     { Source = new Uri($"pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.{theme}.xaml") });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Theme '{theme}' does not exists. Use theme names as 'Red', 'LightBlue' etc");
+                }
+                
             }
         }
 
@@ -979,6 +974,11 @@ namespace SolutionManagerUI.ViewModels
                 try
                 {
                     CurrentSolutionManager.ExportSolution(solution.UniqueName, fullPath, managed);
+                    if (BlobService.IsEnabledBlobStorage())
+                    {
+                        SetDialog($"Uploading to BlobStorage '{solution.UniqueName}' managed={managed}...");
+                        BlobService.Upload(solution.UniqueName, fullPath);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -1205,7 +1205,10 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("ExportManagedSolutionCommand", ExportManagedSolutionCommand);
             Commands.Add("ExportUnmanagedSolutionCommand", ExportUnmanagedSolutionCommand);
-            Commands.Add("ImportSolutionCommand", ImportSolutionCommand);
+            Commands.Add("ImportSolutionCommand", ImportSolutionFromFileCommand);
+            Commands.Add("ImportSolutionFromBlobCommand", ImportSolutionFromBlobCommand);
+            
+
             Commands.Add("CleanSolutionCommand", CleanSolutionCommand);
 
             Commands.Add("CheckSolutionComponentsWichAreOnlyInSolutionCommand", CheckSolutionComponentsWichAreOnlyInSolutionCommand);
@@ -1600,14 +1603,60 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
-        private ICommand _importSolutionCommand = null;
-        public ICommand ImportSolutionCommand
+
+        private ICommand _importSolutionFromBlobCommand = null;
+        public ICommand ImportSolutionFromBlobCommand
         {
             get
             {
-                if (_importSolutionCommand == null)
+                if (_importSolutionFromBlobCommand == null)
                 {
-                    _importSolutionCommand = new RelayCommand((object param) =>
+                    _importSolutionFromBlobCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            DownloadBlobManager man = new DownloadBlobManager(
+                                this.Service,
+                                this.CurrentCrmConnection,
+                                this.CurrentSolutionManager,
+                                this.Settings,
+                                this.BlobService);
+                            man.ShowDialog();
+                            var path = man.GetViewModel().OutputPath;
+                            if (!string.IsNullOrEmpty(path))
+                            {
+                                ImportSolutionManager import =
+                                    new ImportSolutionManager(
+                                        this.Service,
+                                        this.CurrentCrmConnection,
+                                        this.CurrentSolutionManager,
+                                        this.Settings,
+                                        path);
+                                import.ShowDialog();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _importSolutionFromBlobCommand;
+            }
+        }
+
+        private ICommand _importSolutionFromFileCommand = null;
+        public ICommand ImportSolutionFromFileCommand
+        {
+            get
+            {
+                if (_importSolutionFromFileCommand == null)
+                {
+                    _importSolutionFromFileCommand = new RelayCommand((object param) =>
                     {
                         try
                         {
@@ -1635,7 +1684,7 @@ namespace SolutionManagerUI.ViewModels
 
                     });
                 }
-                return _importSolutionCommand;
+                return _importSolutionFromFileCommand;
             }
         }
 
@@ -2393,6 +2442,8 @@ namespace SolutionManagerUI.ViewModels
                             ConnectionManager connection = new ConnectionManager(Connections);
                             connection.ShowDialog();
                             AppDataManager.SaveConnections(Connections);
+                            //CurrentCrmConnection = null;
+                            //UpdateListToCollection(Connections, ConnectionsCollection);
                         }
                         catch (Exception ex)
                         {

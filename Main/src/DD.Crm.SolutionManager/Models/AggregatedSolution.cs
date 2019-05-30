@@ -24,7 +24,7 @@ namespace DD.Crm.SolutionManager.Models
         {
             Sprint = 0,
             MidnightExpress = 1,
-            SilverBullet = 2,
+            OnDemand = 2,
             Mantenance = 3,
         }
 

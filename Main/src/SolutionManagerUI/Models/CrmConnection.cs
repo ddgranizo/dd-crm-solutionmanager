@@ -19,7 +19,12 @@ namespace SolutionManagerUI.Models
     public class CrmConnection
     {
 
-        public CrmColor Color { get; set; }
+        //public CrmColor Color { get; set; }
+
+        //TODO
+        public string ThemeColor { get; set; }
+        public string TimeOut { get; set; }
+
         public string Name { get; set; }
         public string Endpoint { get; set; }
         public string Username { get; set; }

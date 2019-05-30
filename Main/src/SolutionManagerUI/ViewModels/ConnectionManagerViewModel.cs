@@ -68,7 +68,7 @@ namespace SolutionManagerUI.ViewModels
                     Username = _selectedCrmConnection.Username;
                     Name = _selectedCrmConnection.Name;
                     Url = _selectedCrmConnection.Endpoint;
-                    Color = _selectedCrmConnection.Color;
+                    ThemeColor = _selectedCrmConnection.ThemeColor;
                 }
 
             }
@@ -120,17 +120,17 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
-        private CrmColor _color = 0;
-        public CrmColor Color
+        private string _themeColor = null;
+        public string ThemeColor
         {
             get
             {
-                return _color;
+                return _themeColor;
             }
             set
             {
-                _color = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Color"));
+                _themeColor = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("ThemeColor"));
                 RaiseCanExecuteChanged();
             }
         }
@@ -182,17 +182,17 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-        private CrmColor _newColor = 0;
-        public CrmColor NewColor
+        private string _newThemeColor = null;
+        public string NewThemeColor
         {
             get
             {
-                return _newColor;
+                return _newThemeColor;
             }
             set
             {
-                _newColor = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewColor"));
+                _newThemeColor = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("NewThemeColor"));
                 RaiseCanExecuteChanged();
             }
         }
@@ -544,7 +544,7 @@ namespace SolutionManagerUI.ViewModels
                             SelectedCrmConnection.Endpoint = Url;
                             SelectedCrmConnection.Name = Name;
                             SelectedCrmConnection.Username = Username;
-                            SelectedCrmConnection.Color = Color;
+                            SelectedCrmConnection.ThemeColor = ThemeColor;
                             if (!string.IsNullOrEmpty(Password))
                             {
                                 SelectedCrmConnection.Password = Crypto.Encrypt(Password);
@@ -563,7 +563,7 @@ namespace SolutionManagerUI.ViewModels
                         return !string.IsNullOrEmpty(Name)
                             && !string.IsNullOrEmpty(Username)
                             && !string.IsNullOrEmpty(Url)
-                            && (int)Color > 0
+                            && !string.IsNullOrEmpty(ThemeColor)
                             && !IsTestingConnection;
                     });
                 }
@@ -589,7 +589,7 @@ namespace SolutionManagerUI.ViewModels
                                 Endpoint = NewUrl,
                                 Password = Crypto.Encrypt(NewPassword),
                                 Name = NewName,
-                                Color = NewColor,
+                                ThemeColor = NewThemeColor,
                                 Username = NewUsername
                             });
                             Connections = connections;
@@ -605,7 +605,7 @@ namespace SolutionManagerUI.ViewModels
                             && !string.IsNullOrEmpty(NewUsername)
                             && !string.IsNullOrEmpty(NewPassword)
                             && !string.IsNullOrEmpty(NewUrl)
-                            && (int)NewColor > 0
+                            && !string.IsNullOrEmpty(NewThemeColor)
                             && !IsTestingConnection;
                     });
                 }
