@@ -117,6 +117,12 @@ namespace DD.Crm.SolutionManager
             return CrmProvider.FindEmptySolutions(_service);
         }
 
+        public string GetSolutionVersion(Guid solutionId)
+        {
+            var solution = CrmProvider.GetSolution(_service, solutionId);
+            return solution.Version;
+        }
+
 
         public void IncreaseSolutionRevisionVersion(Guid solutionId)
         {
@@ -308,6 +314,8 @@ namespace DD.Crm.SolutionManager
             componentsFromSolutions.AddRange(components);
             return GetMergedSolutionComponents(componentsFromSolutions);
         }
+
+       
 
         public List<MergedInSolutionComponent> GetMergedSolutionComponents(List<Guid> solutionIds, bool expandDefinition = false)
         {

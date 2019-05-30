@@ -968,7 +968,7 @@ namespace SolutionManagerUI.ViewModels
         {
             string defaultPath = GetDefaultZipPath();
             var path = FileDialogManager.SelectPath(defaultPath);
-            path = GetPathWithLastSlash(path);
+            path = StringFormatter.GetPathWithLastSlash(path);
             var fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, managed);
             var fullPath = string.Format("{0}{1}", path, fileName);
             SetDialog($"Exporting solution managed={managed}...");
@@ -1077,10 +1077,10 @@ namespace SolutionManagerUI.ViewModels
             }
         }
 
-        private Guid _checkSolutionComponentsWichAreOnlyInSolutionTaskId = Guid.NewGuid();
+        private Guid _checkSolutionComponentsWhichAreOnlyInSolutionTaskId = Guid.NewGuid();
         private void CheckSolutionComponentsWichAreOnlyInSolution(Solution solution)
         {
-            SetDialog($"Calculating components wich are only in this solution...");
+            SetDialog($"Calculating components which are only in this solution...");
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 var isError = false;
@@ -1123,7 +1123,7 @@ namespace SolutionManagerUI.ViewModels
                     }
                     UnsetDialog();
                 });
-            }, string.Empty, _checkSolutionComponentsWichAreOnlyInSolutionTaskId);
+            }, string.Empty, _checkSolutionComponentsWhichAreOnlyInSolutionTaskId);
         }
 
 
@@ -1160,15 +1160,7 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-        private static string GetPathWithLastSlash(string path)
-        {
-            if (path.Last() != '\\' && path.Last() != '/')
-            {
-                path = string.Format("{0}\\", path);
-            }
-
-            return path;
-        }
+        
 
         protected override void RegisterCommands()
         {

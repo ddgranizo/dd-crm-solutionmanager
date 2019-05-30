@@ -620,6 +620,22 @@ namespace DD.Crm.SolutionManager.Utilities
                     .ToList();
         }
 
+
+        public static Entity GetRibbonData(IOrganizationService service,  Guid objectId)
+        {
+            QueryByAttribute qe = new QueryByAttribute(new RibbonData().EntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            qe.AddAttributeValue("ribboncustomizationid", objectId);
+            var entities = service.RetrieveMultiple(qe).Entities;
+            if (entities.Count>0)
+            {
+                return entities[0];
+            }
+            return null;
+            //return service.Retrieve(entityLogicalName, objectId, new ColumnSet(true));
+        }
+
+
         public static Entity GetGenericData(IOrganizationService service, string entityLogicalName, Guid objectId)
         {
             return service.Retrieve(entityLogicalName, objectId, new ColumnSet(true));
@@ -831,8 +847,8 @@ namespace DD.Crm.SolutionManager.Utilities
             else if (component.Type == SolutionComponentType.Ribbon)
             {
                 var logicalName = new RibbonData().EntityLogicalName;
-                return GetGenericData(service, logicalName, componentId)
-                        .ToRibbonData();
+                var data = GetRibbonData(service, componentId);
+                return data.ToRibbonData();
             }
             else if (component.Type == SolutionComponentType.Chart)
             {

@@ -351,7 +351,7 @@
                                                             <MenuItem Header="Export Unmanaged" Command="{Binding Source={StaticResource viewModel}, Path=ExportUnmanagedSolutionCommand, Mode=OneWay}" />
                                                         </MenuItem>
                                                         <Separator />
-                                                        <MenuItem Header="Components wich are only in this solution" Command="{Binding Source={StaticResource viewModel}, Path=CheckSolutionComponentsWichAreOnlyInSolutionCommand, Mode=OneWay}" />
+                                                        <MenuItem Header="Components which are only in this solution" Command="{Binding Source={StaticResource viewModel}, Path=CheckSolutionComponentsWichAreOnlyInSolutionCommand, Mode=OneWay}" />
                                                         
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>

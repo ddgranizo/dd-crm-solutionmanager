@@ -10,6 +10,17 @@ namespace SolutionManagerUI.Utilities
    public static class StringFormatter
     {
 
+
+        public static string GetPathWithLastSlash(string path)
+        {
+            if (path.Last() != '\\' && path.Last() != '/')
+            {
+                path = string.Format("{0}\\", path);
+            }
+
+            return path;
+        }
+
         public static string GetSolutionFileName(string uniqueName, string version, bool managed)
         {
             string managedStr = managed ? "_managed" : string.Empty;

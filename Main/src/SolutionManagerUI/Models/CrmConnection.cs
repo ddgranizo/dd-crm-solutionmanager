@@ -31,7 +31,7 @@ namespace SolutionManagerUI.Models
 
         public string GetStringConnetion()
         {
-            return string.Format(@"ServiceUri={0}; Username={1}; Password={2}; authtype=Office365; RequireNewInstance=True;",
+            return string.Format(@"ServiceUri={0}; Username={1}; Password={2}; authtype=Office365; RequireNewInstance=True; Timeout=00:30:00;",
                                     Endpoint,
                                     Username,
                                     Crypto.Decrypt(Password));

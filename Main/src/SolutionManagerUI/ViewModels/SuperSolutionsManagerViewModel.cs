@@ -25,7 +25,7 @@ namespace SolutionManagerUI.ViewModels
 
     public class SuperSolutionsManagerViewModel : BaseViewModel
     {
-
+        public const string DefaultExportPathSettingKey = "SOLUTION_OUTPUT_DIRECTORY";
         private const string FormatSuperSolutionSettingKeyName = "COMPONENT_TYPE_{0}_SUPERSOLUTION";
         private const string FormatWebResourceSuperSolutionSettingKeyName = "COMPONENT_TYPE_{0}_{1}_SUPERSOLUTION";
         private const int WebResourceType = 61;
@@ -205,6 +205,7 @@ namespace SolutionManagerUI.ViewModels
         private Window _window;
 
 
+        public List<Setting> Settings { get; set; }
 
         public void Initialize(
             Window window,
@@ -221,7 +222,7 @@ namespace SolutionManagerUI.ViewModels
             this.CurrentCrmConnection = crmConnection;
             this.CurrentSolutionManager = solutionManager;
             SetSuperSolutions(service, settings);
-
+            this.Settings = settings;
             IsAggregatedMode = false;
             if (aggregatedSolution != null)
             {
@@ -237,7 +238,12 @@ namespace SolutionManagerUI.ViewModels
         private Guid _mergeTaskId = Guid.NewGuid();
         private void MergeWithSuperSolutions()
         {
+            string defaultPath = GetDefaultZipPath();
+            var path = FileDialogManager.SelectPath(defaultPath);
+            path = StringFormatter.GetPathWithLastSlash(path);
+
             SetDialog("Merging...");
+
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 var isError = false;
@@ -245,11 +251,16 @@ namespace SolutionManagerUI.ViewModels
                 var mappingsWithBackpus = new Dictionary<string, string>();
                 try
                 {
+                    UpdateDialogMessage($"Publishing all customizations...");
+                    //CurrentSolutionManager.PublishAll();
                     List<Solution> affectedSuperSolutions = GetAffectedSuperSolutions();
                     UpdateDialogMessage($"Cloning affected solutions... ({affectedSuperSolutions.Count})");
                     mappingsWithBackpus = CloneAffectedSolutions(affectedSuperSolutions);
                     CleanAndMergeSourceSolutions(affectedSuperSolutions, mappingsWithBackpus);
                     RemovedClonedBackupSolutions(affectedSuperSolutions, mappingsWithBackpus);
+                    UpdateDialogMessage($"Exporting affected solutions...");
+                    ExportAffectedSuperSolutions(affectedSuperSolutions, path);
+
 
                 }
                 catch (Exception ex)
@@ -274,6 +285,24 @@ namespace SolutionManagerUI.ViewModels
 
         }
 
+
+        private void ExportAffectedSuperSolutions(List<Solution> affectedSuperSolutions, string path)
+        {
+            foreach (var solution in affectedSuperSolutions)
+            {
+                ExportSolutionToPath(path, solution, true);
+                ExportSolutionToPath(path, solution, false);
+            }
+        }
+
+        private void ExportSolutionToPath(string path, Solution solution, bool managed)
+        {
+            var fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, managed);
+            var fullPath = string.Format("{0}{1}", path, fileName);
+            SetDialog($"Exporting solution '{solution.UniqueName}' managed={managed}...");
+            CurrentSolutionManager.ExportSolution(solution.UniqueName, fullPath, managed);
+        }
+
         private void CleanAndMergeSourceSolutions(List<Solution> affectedSuperSolutions, Dictionary<string, string> mappings)
         {
             foreach (var item in affectedSuperSolutions)
@@ -288,16 +317,19 @@ namespace SolutionManagerUI.ViewModels
                 var backupSolution = CurrentSolutionManager.GetSolution(backupKey);
                 var componentsInBackupSolution = CurrentSolutionManager.GetSolutionComponents(backupSolution.Id, false);
                 UpdateDialogMessage($"Calculating new components for {item.UniqueName}...");
-
-                var componentsForThisSolution = GetSolutionComponentsForSolution(item);
+                var componentsForThisSolution = GetSolutionComponentsForSolution(item).Cast<SolutionComponentBase>().ToList();
+                var allComponents = new List<SolutionComponentBase>();
+                allComponents.AddRange(componentsInBackupSolution);
+                allComponents.AddRange(componentsForThisSolution);
 
                 var newSuperSolutionComponents =
                     CurrentSolutionManager
-                        .GetMergedSolutionComponents(new List<Guid>() { item.Id }, componentsForThisSolution, false);
+                        .GetMergedSolutionComponents(allComponents);
                 UpdateDialogMessage($"Adding components to supersolution {item.UniqueName}...");
                 CurrentSolutionManager.CreateMergedSolution(item.Id, newSuperSolutionComponents);
                 UpdateDialogMessage($"Increasing revision version of {item.UniqueName}...");
                 CurrentSolutionManager.IncreaseSolutionRevisionVersion(item.Id);
+                item.Version = CurrentSolutionManager.GetSolutionVersion(item.Id);
             }
         }
 
@@ -551,5 +583,10 @@ namespace SolutionManagerUI.ViewModels
             IsDialogOpen = false;
         }
 
+
+        private string GetDefaultZipPath()
+        {
+            return SettingsManager.GetSetting<string>(this.Settings, DefaultExportPathSettingKey, null);
+        }
     }
 }
