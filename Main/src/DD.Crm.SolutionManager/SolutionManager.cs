@@ -29,6 +29,24 @@ namespace DD.Crm.SolutionManager
         }
 
 
+
+        public void SetStatusAggregatedSolution(Guid aggregatedId, AggregatedSolution.AggregatedSolutionStatus status)
+        {
+            CrmProvider.UpdateAggregatedSolutionStatus(_service, aggregatedId, status);
+        }
+
+
+        public void UnsetMergedWithSupersolutionFlagInAggregatedSolution(Guid aggregatedId)
+        {
+            CrmProvider.UpdateAggregatedSolutionMergedWithSupersolutionFlag(_service, aggregatedId, false);
+        }
+
+        public void SetMergedWithSupersolutionFlagInAggregatedSolution(Guid aggregatedId)
+        {
+            CrmProvider.UpdateAggregatedSolutionMergedWithSupersolutionFlag(_service, aggregatedId, true);
+        }
+
+
         public void RemoveAggregatedSolution(Guid id)
         {
             CrmProvider.RemoveAggregatedSolution(_service, id);
@@ -270,6 +288,11 @@ namespace DD.Crm.SolutionManager
         public List<WorkSolution> GetWorkSolutions(Guid aggregatedSolutionId)
         {
             return CrmProvider.GetWorkSolutions(this._service, aggregatedSolutionId);
+        }
+
+        public List<WorkSolution> GetAllWorkSolutions()
+        {
+            return CrmProvider.GetAllWorkSolutions(this._service);
         }
 
         public List<WorkSolution> GetAllOpenWorkSolutions()

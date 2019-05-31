@@ -57,8 +57,8 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-        private readonly ObservableCollection<string> _blobsCollection = new ObservableCollection<string>();
-        public ObservableCollection<string> BlobsCollection
+        private readonly ObservableCollection<BlobData> _blobsCollection = new ObservableCollection<BlobData>();
+        public ObservableCollection<BlobData> BlobsCollection
         {
             get
             {
@@ -67,8 +67,8 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-        private List<string> _blobs = null;
-        public List<string> Blobs
+        private List<BlobData> _blobs = null;
+        public List<BlobData> Blobs
         {
             get
             {
@@ -78,13 +78,31 @@ namespace SolutionManagerUI.ViewModels
             {
                 _blobs = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Blobs"));
-                UpdateListToCollection(value, BlobsCollection);
+                FilterBlobList();
             }
         }
 
+        private void FilterBlobList()
+        {
+            var allBlobs = Blobs;
 
-        private string _selectedBlob = null;
-        public string SelectedBlob
+            if (string.IsNullOrEmpty(FilterBlob))
+            {
+                UpdateListToCollection(allBlobs, BlobsCollection);
+            }
+            else
+            {
+                var filteredBlobs = allBlobs
+                        .Where(k => k.Name.ToLowerInvariant().IndexOf(FilterBlob.ToLowerInvariant()) > -1)
+                        .ToList();
+
+                UpdateListToCollection(filteredBlobs, BlobsCollection);
+            }
+
+        }
+
+        private BlobData _selectedBlob = null;
+        public BlobData SelectedBlob
         {
             get
             {
@@ -97,6 +115,24 @@ namespace SolutionManagerUI.ViewModels
                 RaiseCanExecuteChanged();
             }
         }
+
+
+        private string _filterBlob = null;
+        public string FilterBlob
+        {
+            get
+            {
+                return _filterBlob;
+            }
+            set
+            {
+                _filterBlob = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("FilterBlob"));
+                RaiseCanExecuteChanged();
+                FilterBlobList();
+            }
+        }
+
         public string OutputPath { get; set; }
         public BlobStorageService BlobService { get; set; }
 
@@ -132,7 +168,7 @@ namespace SolutionManagerUI.ViewModels
                 var errorMessage = string.Empty;
                 try
                 {
-                    BlobService.Download(SelectedBlob, path);
+                    BlobService.Download(SelectedBlob.Name, path);
                 }
                 catch (Exception ex)
                 {
@@ -185,7 +221,7 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return !string.IsNullOrEmpty(SelectedBlob);
+                        return SelectedBlob != null;
                     });
                 }
                 return _downloadSolutionCommand;
@@ -217,5 +253,5 @@ namespace SolutionManagerUI.ViewModels
 
     }
 
-    
+
 }

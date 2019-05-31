@@ -37,5 +37,13 @@ namespace SolutionManagerUI.Views
             _viewModel.Initialize(this, service, currentCrmConnection, solutionManager, settings, aggregated);
         }
 
+      
+
+        private void WorkSolutionsList_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            ScrollViewer scv = WorkSolutionsListScrollViewer;
+            scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
     }
 }

@@ -22,6 +22,25 @@ namespace DD.Crm.SolutionManager.Utilities
     public static class CrmProvider
     {
 
+
+
+        public static void UpdateAggregatedSolutionStatus(IOrganizationService service, Guid workSolutionid, AggregatedSolution.AggregatedSolutionStatus status)
+        {
+            Entity e = new Entity(AggregatedSolution.EntityLogicalName);
+            e.Id = workSolutionid;
+            e[AggregatedSolution.AttributeDefinitions.Status] = new OptionSetValue((int)status);
+            service.Update(e);
+        }
+
+        public static void UpdateAggregatedSolutionMergedWithSupersolutionFlag(IOrganizationService service, Guid aggratedSolutionId, bool merged)
+        {
+            Entity e = new Entity(AggregatedSolution.EntityLogicalName);
+            e.Id = aggratedSolutionId;
+            e[AggregatedSolution.AttributeDefinitions.IsMergedWithSupersolution] = merged;
+            service.Update(e);
+        }
+
+
         public static void RemoveAggregatedSolution(IOrganizationService service, Guid workSolutionid)
         {
             service.Delete(AggregatedSolution.EntityLogicalName, workSolutionid);
@@ -556,6 +575,17 @@ namespace DD.Crm.SolutionManager.Utilities
             }
 
             service.Execute(addReq);
+        }
+
+        public static List<WorkSolution> GetAllWorkSolutions(IOrganizationService service)
+        {
+            QueryExpression qe = new QueryExpression(WorkSolution.EntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            var entities = service.RetrieveMultiple(qe)
+                    .Entities;
+            return entities
+                    .Select(k => { return k.ToWorkSolution(); })
+                    .ToList();
         }
 
 

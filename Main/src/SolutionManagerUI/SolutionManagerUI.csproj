@@ -122,6 +122,7 @@
     </Compile>
     <Compile Include="Converters\IsManagedToFontColorConverter.cs" />
     <Compile Include="Converters\IndexConverter.cs" />
+    <Compile Include="Converters\AggregatedSolutionStatusToBackgroundConverter.cs" />
     <Compile Include="Converters\WorkSolutionStatusToBackgroundConverter.cs" />
     <Compile Include="Converters\BoolToOpacy.cs" />
     <Compile Include="Converters\ComponentBehaviorIncludeMetadataToVisibilityConverter.cs" />
@@ -134,6 +135,7 @@
     <Compile Include="Events\ThreadManagerScheduledTaskDescription.cs" />
     <Compile Include="Events\ThreadTaskEventArgs.cs" />
     <Compile Include="Models\AggregatedSolutionTypeData.cs" />
+    <Compile Include="Models\BlobData.cs" />
     <Compile Include="Models\ComponentTypeData.cs" />
     <Compile Include="Models\CrmConnection.cs" />
     <Compile Include="Models\Setting.cs" />

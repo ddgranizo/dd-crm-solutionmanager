@@ -20,10 +20,15 @@ using System.Windows.Input;
 namespace SolutionManagerUI.ViewModels
 {
 
+
+    
+
     public class AggregatedSolutionManagerViewModel : BaseViewModel
     {
 
         private Window _window;
+
+
 
 
 

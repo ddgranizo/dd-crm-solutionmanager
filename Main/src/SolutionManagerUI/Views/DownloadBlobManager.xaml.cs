@@ -43,5 +43,12 @@ namespace SolutionManagerUI.Views
         {
             return _viewModel;
         }
+
+        private void BlobListView_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            ScrollViewer scv = BlobScrollViewer;
+            scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
     }
 }

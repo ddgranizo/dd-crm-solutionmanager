@@ -140,7 +140,7 @@ namespace SolutionManagerUI.ViewModels
         private Guid _importTaskId = Guid.NewGuid();
         private void ImportSolution()
         {
-            SetDialog("Importing async...");
+            SetDialog($"Importing {Path} async...");
             ThreadManager.Instance.ScheduleTask(() =>
             {
                 var isError = false;

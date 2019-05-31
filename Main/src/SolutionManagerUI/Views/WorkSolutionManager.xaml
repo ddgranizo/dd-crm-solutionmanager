@@ -26,7 +26,13 @@
             <vm:WorkSolutionManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:WorkSolutionManagerViewModel>
             <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
             <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
-
+            <conv:IndexConverter x:Key="IndexConverter" />
+            <conv:WorkSolutionStatusToBackgroundConverter x:Key="WorkSolutionStatusToBackgroundConverter" />
+            <ObjectDataProvider x:Key="operationTypes" MethodName="GetValues" ObjectType="{x:Type System:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="vm:WorkOperationType"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
         </Grid.Resources>
 
 
@@ -60,20 +66,103 @@
                         </Grid.ColumnDefinitions>
 
                         <Grid.RowDefinitions>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
-                            <RowDefinition Height="auto"/>
+                            
                             <RowDefinition Height="auto"/>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
 
-                        <Label Margin="4" Grid.Row="0" Grid.Column="0">Name:</Label>
-                        <TextBox Margin="4" Text="{Binding Name}" Grid.Row="0" Grid.Column="1" ></TextBox>
+                        <Label Grid.Row="0" Grid.Column="0">Existing/New</Label>
+                        <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding CurrentOperationType}" ItemsSource="{Binding Source={StaticResource operationTypes}}"></ComboBox>
 
-                        <Label Margin="4" Grid.Row="1" Grid.Column="0">Jira:</Label>
-                        <TextBox Margin="4" Text="{Binding Jira}" Grid.Row="1" Grid.Column="1" ></TextBox>
+
+                        <Grid  Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Visibility="{Binding IsCreateingMode, Converter={StaticResource BoolToCollapseConverter}}">
+                            <Grid.ColumnDefinitions >
+                                <ColumnDefinition Width="auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Label Margin="4" Grid.Row="0" Grid.Column="0">Name:</Label>
+                            <TextBox Margin="4" Text="{Binding Name}" Grid.Row="0" Grid.Column="1" ></TextBox>
+
+                            <Label Margin="4" Grid.Row="1" Grid.Column="0">Jira:</Label>
+                            <TextBox Margin="4" Text="{Binding Jira}" Grid.Row="1" Grid.Column="1" ></TextBox>
+                        </Grid>
+
+
+                        <Grid  Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Visibility="{Binding IsAddingExistingMode, Converter={StaticResource BoolToCollapseConverter}}">
+
+
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Label Grid.Column="0">Filter:</Label>
+                                <TextBox Grid.Column="1" Text="{Binding FilterWork, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                            </Grid>
+                            
+                            <ScrollViewer  x:Name="WorkSolutionsListScrollViewer" Grid.Row="1">
+                                <ListView x:Name="WorkSolutionsList"  
+                                          Margin="7" 
+                                          ItemsSource="{Binding FilteredWorkSolutionsCollection}" 
+                                          PreviewMouseWheel="WorkSolutionsList_PreviewMouseWheel" 
+                                          SelectedItem="{Binding SelectedWorkSolution}">
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="5" >
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
+
+                                                <Label Width="100" Grid.Column="1"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource WorkSolutionStatusToBackgroundConverter}}" >
+                                                    <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
+                                                </Label>
+                                                <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="2"></TextBlock>
+
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.Style>
+                                        <Style TargetType="ListView">
+                                            <Style.Triggers>
+                                                <Trigger Property="HasItems" Value="False">
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListView">
+                                                                <TextBlock Text="No items..."/>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ListView.Style>
+                                </ListView>
+                            </ScrollViewer>
+
+
+                        </Grid>
 
 
                         <Button Grid.Row="6" Grid.Column="1" HorizontalAlignment="Right"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create" Command="{Binding Source={StaticResource viewModel}, Path=CreateWorkSolutionCommand, Mode=OneWay}">

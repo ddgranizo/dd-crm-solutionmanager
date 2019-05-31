@@ -36,6 +36,7 @@
             <conv:ComponentBehaviorIncludeMetadataToVisibilityConverter x:Key="ComponentBehaviorIncludeMetadataToVisibilityConverter" />
             <conv:IsComponentEntityToVisibilityConverter x:Key="IsComponentEntityToVisibilityConverter" />
             <conv:WorkSolutionStatusToBackgroundConverter x:Key="WorkSolutionStatusToBackgroundConverter" />
+            <conv:AggregatedSolutionStatusToBackgroundConverter x:Key="AggregatedSolutionStatusToBackgroundConverter" />
             <conv:IndexConverter x:Key="IndexConverter" />
             <conv:IsManagedToFontColorConverter x:Key="IsManagedToFontColorConverter" />
         </Grid.Resources>
@@ -156,13 +157,36 @@
                                             <Grid Margin="5">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
-                                                <TextBlock Grid.Column="1" Text="{Binding Name}"></TextBlock>
+                                                
+                                                <Label Width="150" Grid.Column="1"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource AggregatedSolutionStatusToBackgroundConverter}}" >
+                                                    <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
+                                                </Label>
+
+                                                <Grid ToolTip="Merged with supersolution" Margin="5" Grid.Column="2" Visibility="{Binding IsMergedWithSupersolution, Converter={StaticResource BoolToCollapseConverter}}">
+                                                    <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Icon="Check" Height="16" Width="16" />
+                                                </Grid>
+                                                
+                                                <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" Grid.Column="3" Text="{Binding Name}"></TextBlock>
+
+                                                
 
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
+                                                        <MenuItem Header="State">
+                                                            <MenuItem Header="Set as merged with supersolution" Command="{Binding Source={StaticResource viewModel}, Path=SetMergedWithSupersolutionFlagInAggregatedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Unset as merged with supersolution" Command="{Binding Source={StaticResource viewModel}, Path=UnsetMergedWithSupersolutionFlagInAggregatedSolutionCommand, Mode=OneWay}" />
+                                                            <Separator />
+                                                            <MenuItem Header="Set status Development" Command="{Binding Source={StaticResource viewModel}, Path=SetStatusClosedDevelopmentAggregatedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Set status Closed Development" Command="{Binding Source={StaticResource viewModel}, Path=SetStatusClosedDevelopmentAggregatedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Set status Staging/Integration" Command="{Binding Source={StaticResource viewModel}, Path=SetStatusStagingAndIntegrationAggregatedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Set status Preproduction" Command="{Binding Source={StaticResource viewModel}, Path=SetStatusPreproductionAggregatedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Set status Production" Command="{Binding Source={StaticResource viewModel}, Path=SetStatuProductionAggregatedSolutionCommand, Mode=OneWay}" />
+                                                        </MenuItem>
                                                         <MenuItem Header="Check work solutions" Command="{Binding Source={StaticResource viewModel}, Path=CheckAggregatedSolutionsCommand, Mode=OneWay}" />
                                                         <Separator />
                                                         <MenuItem Header="Create solution from aggregated" Command="{Binding Source={StaticResource viewModel}, Path=MergeAggregatedSolutionsCommand, Mode=OneWay}" />
@@ -401,7 +425,7 @@
                     <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Icon="Refresh" Spin="True" Height="25" Width="25" />
                 </Grid>
                 <Grid Grid.Column="4" Margin="5" Visibility="{Binding IsRetrievingSolutionComponents, Converter={StaticResource BoolToCollapseConverter}, ConverterParameter=False}">
-                    <GroupBox Header="{Binding SelectedWorkSolutionsString, StringFormat='Solution components ({0})'}">
+                    <GroupBox Header="Solution Components">
                         <Grid Grid.Column="0" Margin="5">
                             <Grid.RowDefinitions >
                                 <RowDefinition Height="auto"/>
@@ -519,7 +543,7 @@
 
                 </StatusBarItem>
                 <StatusBarItem>
-                    <TextBlock Text="{Binding CurrentCrmConnection.Endpoint, StringFormat='Connected to {0}'}"></TextBlock>
+                    <TextBlock Visibility="{Binding IsServiceConnected, Converter={StaticResource BoolToCollapseConverter}}" Text="{Binding CurrentCrmConnection.Endpoint, StringFormat='Connected to {0}'}"></TextBlock>
                 </StatusBarItem>
             </StatusBar>
         </Grid>

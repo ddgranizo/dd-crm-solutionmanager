@@ -537,6 +537,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _currentSolutionManager = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentSolutionManager"));
+
                 RaiseCanExecuteChanged();
                 if (CurrentSolutionManager != null && OnLoadCommand != null)
                 {
@@ -636,9 +637,9 @@ namespace SolutionManagerUI.ViewModels
             }
             set
             {
+                _currentCrmConnection = value;
                 SetEmptyTemplate();
                 EmptyContext(true);
-                _currentCrmConnection = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentCrmConnection"));
                 Service = null;
                 if (value != null)
@@ -825,10 +826,6 @@ namespace SolutionManagerUI.ViewModels
 
         private void EmptyContext(bool restartSolutionManager)
         {
-            if (CurrentCrmConnection != null)
-            {
-                CurrentCrmConnection = null;
-            }
             SelectedWorkSolution = null;
             WorkSolutions = null;
             SelectedAggregatedSolution = null;
@@ -1226,8 +1223,250 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("SetReadyWorkSolutionCommand", SetReadyWorkSolutionCommand);
             Commands.Add("SetNotReadyWorkSolutionCommand", SetNotReadyWorkSolutionCommand);
+
+
+            Commands.Add("SetMergedWithSupersolutionFlagInAggregatedSolutionCommand", SetMergedWithSupersolutionFlagInAggregatedSolutionCommand);
+            Commands.Add("UnsetMergedWithSupersolutionFlagInAggregatedSolutionCommand", UnsetMergedWithSupersolutionFlagInAggregatedSolutionCommand);
+            Commands.Add("SetStatusDevelopmentAggregatedSolutionCommand", SetStatusDevelopmentAggregatedSolutionCommand);
+            Commands.Add("SetStatusClosedDevelopmentAggregatedSolutionCommand", SetStatusClosedDevelopmentAggregatedSolutionCommand);
+            Commands.Add("SetStatusStagingAndIntegrationAggregatedSolutionCommand", SetStatusStagingAndIntegrationAggregatedSolutionCommand);
+            Commands.Add("SetStatusPreproductionAggregatedSolutionCommand", SetStatusPreproductionAggregatedSolutionCommand);
+            Commands.Add("SetStatuProductionAggregatedSolutionCommand", SetStatuProductionAggregatedSolutionCommand);
+
         }
 
+
+        private ICommand _setStatuProductionAggregatedSolutionCommand = null;
+        public ICommand SetStatuProductionAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_setStatuProductionAggregatedSolutionCommand == null)
+                {
+                    _setStatuProductionAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetStatusAggregatedSolution(SelectedAggregatedSolution.Id, AggregatedSolution.AggregatedSolutionStatus.Production);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _setStatuProductionAggregatedSolutionCommand;
+            }
+        }
+
+
+        private ICommand _setStatusPreproductionAggregatedSolutionCommand = null;
+        public ICommand SetStatusPreproductionAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_setStatusPreproductionAggregatedSolutionCommand == null)
+                {
+                    _setStatusPreproductionAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetStatusAggregatedSolution(SelectedAggregatedSolution.Id, AggregatedSolution.AggregatedSolutionStatus.Preproduction);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _setStatusPreproductionAggregatedSolutionCommand;
+            }
+        }
+
+
+
+        private ICommand _setStatusStagingAndIntegrationAggregatedSolutionCommand = null;
+        public ICommand SetStatusStagingAndIntegrationAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_setStatusStagingAndIntegrationAggregatedSolutionCommand == null)
+                {
+                    _setStatusStagingAndIntegrationAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetStatusAggregatedSolution(SelectedAggregatedSolution.Id, AggregatedSolution.AggregatedSolutionStatus.StagingAndIntegration);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _setStatusStagingAndIntegrationAggregatedSolutionCommand;
+            }
+        }
+
+
+        private ICommand _setStatusClosedDevelopmentAggregatedSolutionCommand = null;
+        public ICommand SetStatusClosedDevelopmentAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_setStatusClosedDevelopmentAggregatedSolutionCommand == null)
+                {
+                    _setStatusClosedDevelopmentAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetStatusAggregatedSolution(SelectedAggregatedSolution.Id, AggregatedSolution.AggregatedSolutionStatus.ClosedDevelopment);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _setStatusClosedDevelopmentAggregatedSolutionCommand;
+            }
+        }
+
+        private ICommand _setStatusDevelopmentAggregatedSolutionCommand = null;
+        public ICommand SetStatusDevelopmentAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_setStatusDevelopmentAggregatedSolutionCommand == null)
+                {
+                    _setStatusDevelopmentAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetStatusAggregatedSolution(SelectedAggregatedSolution.Id, AggregatedSolution.AggregatedSolutionStatus.Development);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _setStatusDevelopmentAggregatedSolutionCommand;
+            }
+
+        }
+
+
+        private ICommand _unsetMergedWithSupersolutionFlagInAggregatedSolutionCommand = null;
+        public ICommand UnsetMergedWithSupersolutionFlagInAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_unsetMergedWithSupersolutionFlagInAggregatedSolutionCommand == null)
+                {
+                    _unsetMergedWithSupersolutionFlagInAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.UnsetMergedWithSupersolutionFlagInAggregatedSolution(SelectedAggregatedSolution.Id);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _unsetMergedWithSupersolutionFlagInAggregatedSolutionCommand;
+            }
+
+        }
+
+        private ICommand _setMergedWithSupersolutionFlagInAggregatedSolutionCommand = null;
+        public ICommand SetMergedWithSupersolutionFlagInAggregatedSolutionCommand
+        {
+            get
+            {
+                if (_setMergedWithSupersolutionFlagInAggregatedSolutionCommand == null)
+                {
+                    _setMergedWithSupersolutionFlagInAggregatedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CurrentSolutionManager.SetMergedWithSupersolutionFlagInAggregatedSolution(SelectedAggregatedSolution.Id);
+                            ICommand c = ReloadAggregatedSolutionsCommand;
+                            if (c.CanExecute(null))
+                            {
+                                c.Execute(null);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedAggregatedSolution != null;
+
+                    });
+                }
+                return _setMergedWithSupersolutionFlagInAggregatedSolutionCommand;
+            }
+
+        }
 
         private ICommand _setNotReadyWorkSolutionCommand = null;
         public ICommand SetNotReadyWorkSolutionCommand
@@ -2497,7 +2736,9 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
+                            
                             EmptyContext(true);
+                            CurrentCrmConnection = null;
                         }
                         catch (Exception ex)
                         {

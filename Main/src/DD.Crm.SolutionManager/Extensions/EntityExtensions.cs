@@ -48,6 +48,8 @@ namespace DD.Crm.SolutionManager.Extensions
             s.Name = e.GetParameter<string>(AggregatedSolution.AttributeDefinitions.Name);
             s.Type = (AggregatedSolution.AggregatedSolutionType)
                             e.GetParameter<OptionSetValue>(AggregatedSolution.AttributeDefinitions.Type).Value;
+
+            s.IsMergedWithSupersolution = e.GetParameter<bool>(AggregatedSolution.AttributeDefinitions.IsMergedWithSupersolution);
             return s;
         }
 

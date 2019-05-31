@@ -32,9 +32,9 @@ namespace SolutionManagerUI.Services
                     (this.Settings, DefaultBlobStorageDownloadPathSettingKey, null);
         }
 
-        public List<string> GetBlobsInContainer()
+        public List<BlobData> GetBlobsInContainer()
         {
-            List<string> blobs = new List<string>();
+            List<BlobData> blobs = new List<BlobData>();
             if (IsEnabledBlobStorage())
             {
                 var storageAccount = GetStorageAccount();
@@ -47,11 +47,12 @@ namespace SolutionManagerUI.Services
                 {
                     if (blob is CloudBlockBlob)
                     {
-                        blobs.Add(((CloudBlockBlob)blob).Name);
+                        var typed = (CloudBlockBlob)blob;
+                        blobs.Add(new BlobData() {Name = typed.Name, CreatedOn = typed.Properties.LastModified.Value.Date });
                     }
                 }
             }
-            return blobs.OrderBy(k=>k).ToList();
+            return blobs.OrderBy(k=>k.CreatedOn).Reverse().ToList(); 
         }
 
         public void Download(string solutionName, string path)

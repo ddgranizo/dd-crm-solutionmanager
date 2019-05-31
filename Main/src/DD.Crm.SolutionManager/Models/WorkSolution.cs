@@ -32,6 +32,7 @@ namespace DD.Crm.SolutionManager.Models
             public const string SolutionUrl = "alm_solutionurl";
             public const string Status = "statuscode";
             public const string State = "statecode";
+            
         }
 
 

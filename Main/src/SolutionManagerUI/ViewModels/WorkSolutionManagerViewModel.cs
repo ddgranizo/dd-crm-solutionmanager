@@ -20,10 +20,55 @@ using System.Windows.Input;
 namespace SolutionManagerUI.ViewModels
 {
 
+
+    public enum WorkOperationType
+    {
+        CreateWorkSolution,
+        AddExistingWorkSolution
+    }
+
+
     public class WorkSolutionManagerViewModel : BaseViewModel
     {
 
         private Window _window;
+
+
+        private string _filterWork = null;
+        public string FilterWork
+        {
+            get
+            {
+                return _filterWork;
+            }
+            set
+            {
+                _filterWork = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("FilterWork"));
+                FilterWorkSolutions();
+            }
+        }
+
+
+        public bool IsCreateingMode { get { return CurrentOperationType == WorkOperationType.CreateWorkSolution; } }
+        public bool IsAddingExistingMode { get { return CurrentOperationType == WorkOperationType.AddExistingWorkSolution; } }
+
+        private WorkOperationType _currentOperationType = 0;
+        public WorkOperationType CurrentOperationType
+        {
+            get
+            {
+                return _currentOperationType;
+            }
+            set
+            {
+                _currentOperationType = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("CurrentOperationType"));
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsCreateingMode"));
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsAddingExistingMode"));
+                RaiseCanExecuteChanged();
+            }
+        }
 
 
 
@@ -67,6 +112,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 _name = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Name"));
+                RaiseCanExecuteChanged();
             }
         }
 
@@ -82,39 +128,78 @@ namespace SolutionManagerUI.ViewModels
             {
                 _jira = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Jira"));
+                RaiseCanExecuteChanged();
             }
         }
 
 
-        private List<AggregatedSolutionTypeData> _types = null;
-        public List<AggregatedSolutionTypeData> Types
-        {
-            get
-            {
-                return _types;
-            }
-            set
-            {
-                _types = value;
-                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Types"));
-                UpdateListToCollection(value, TypesCollection);
-            }
-        }
-
-        private readonly ObservableCollection<AggregatedSolutionTypeData> _typesCollection = new ObservableCollection<AggregatedSolutionTypeData>();
-        public ObservableCollection<AggregatedSolutionTypeData> TypesCollection
-        {
-            get
-            {
-                return _typesCollection;
-            }
-        }
 
         public SolutionManager CurrentSolutionManager { get; set; }
         public string Path { get; set; }
 
 
-        public AggregatedSolution CurrentAggregatedSolution { get; set; }
+        public WorkSolution CurrentWorkSolution { get; set; }
+
+
+        private readonly ObservableCollection<WorkSolution> _filteredWorkSolutionsCollection = new ObservableCollection<WorkSolution>();
+        public ObservableCollection<WorkSolution> FilteredWorkSolutionsCollection
+        {
+            get
+            {
+                return _filteredWorkSolutionsCollection;
+            }
+        }
+
+
+        private List<WorkSolution> _workSolutions = null;
+        public List<WorkSolution> WorkSolutions
+        {
+            get
+            {
+                return _workSolutions;
+            }
+            set
+            {
+                _workSolutions = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("WorkSolutions"));
+                FilterWorkSolutions();
+            }
+        }
+
+
+
+
+        private WorkSolution _selectedWorkSolution = null;
+        public WorkSolution SelectedWorkSolution
+        {
+            get
+            {
+                return _selectedWorkSolution;
+            }
+            set
+            {
+                _selectedWorkSolution = value;
+                OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("SelectedWorkSolution"));
+                RaiseCanExecuteChanged();
+            }
+        }
+
+
+
+        public void FilterWorkSolutions()
+        {
+            var filteredSolutions = WorkSolutions;
+            if (!string.IsNullOrEmpty(FilterWork))
+            {
+                filteredSolutions = WorkSolutions
+                        .Where(k => k.Name.ToLowerInvariant().IndexOf(FilterWork.ToLowerInvariant()) > -1)
+                        .ToList();
+            }
+            UpdateListToCollection(filteredSolutions, FilteredWorkSolutionsCollection);
+        }
+
+
+        public AggregatedSolution AggregatedSolution { get; set; }
 
         public void Initialize(
             Window window,
@@ -126,7 +211,8 @@ namespace SolutionManagerUI.ViewModels
         {
             this._window = window;
             this.CurrentSolutionManager = solutionManager;
-            this.CurrentAggregatedSolution = aggregated;
+            this.AggregatedSolution = aggregated;
+            this.WorkSolutions = this.CurrentSolutionManager.GetAllWorkSolutions();
             RegisterCommands();
         }
 
@@ -141,9 +227,9 @@ namespace SolutionManagerUI.ViewModels
                 try
                 {
                     var workSolutionId = CurrentSolutionManager.CreateWorkSolution(this.Name, this.Jira);
-                    if (CurrentAggregatedSolution != null)
+                    if (CurrentWorkSolution != null)
                     {
-                        CurrentSolutionManager.AssignWorkSolutionToAggregatedSolution(CurrentAggregatedSolution.Id, workSolutionId);
+                        CurrentSolutionManager.AssignWorkSolutionToAggregatedSolution(AggregatedSolution.Id, workSolutionId);
                     }
                 }
                 catch (Exception ex)
@@ -167,6 +253,43 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
+
+        private Guid _assignTaskId = Guid.NewGuid();
+        private void AssignSolution()
+        {
+            SetDialog("Assigning...");
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var isError = false;
+                var errorMessage = string.Empty;
+                try
+                {
+                    CurrentSolutionManager
+                        .AssignWorkSolutionToAggregatedSolution
+                            (AggregatedSolution.Id, SelectedWorkSolution.Id);
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        _window.Close();
+                    }
+                    UnsetDialog();
+                });
+            }, string.Empty, _assignTaskId);
+        }
+
+
+
         protected override void RegisterCommands()
         {
             Commands.Add("CreateWorkSolutionCommand", CreateWorkSolutionCommand);
@@ -184,7 +307,16 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            CreateSolution();
+
+                            if (IsCreateingMode)
+                            {
+                                CreateSolution();
+                            }
+                            else if (IsAddingExistingMode)
+                            {
+                                AssignSolution();
+                            }
+                            
                         }
                         catch (Exception ex)
                         {
@@ -192,7 +324,8 @@ namespace SolutionManagerUI.ViewModels
                         }
                     }, (param) =>
                     {
-                        return true;
+                        return IsCreateingMode && !string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(Jira)
+                                    || IsAddingExistingMode && SelectedWorkSolution != null;
                     });
                 }
                 return _createWorkSolutionCommand;
@@ -224,5 +357,5 @@ namespace SolutionManagerUI.ViewModels
 
     }
 
-    
+
 }

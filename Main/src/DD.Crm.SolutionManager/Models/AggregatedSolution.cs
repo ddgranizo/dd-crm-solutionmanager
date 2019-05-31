@@ -14,9 +14,9 @@ namespace DD.Crm.SolutionManager.Models
         {
             Development = 1,
             ClosedDevelopment = 2,
-            Integration = 4,
-            Preproduction = 5,
-            Production = 6
+            StagingAndIntegration = 3,
+            Preproduction = 4,
+            Production = 5
         }
 
 
@@ -39,6 +39,7 @@ namespace DD.Crm.SolutionManager.Models
             public const string Type = "alm_aggregatortypecode";
             public const string Status = "statuscode";
             public const string State = "statecode";
+            public const string IsMergedWithSupersolution = "alm_ismerged";
         }
 
         public AggregatedSolutionStatus Status { get; set; }
@@ -48,6 +49,9 @@ namespace DD.Crm.SolutionManager.Models
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }
         public List<WorkSolution> WorkSolutions { get; set; }
+
+        public bool IsMergedWithSupersolution { get; set; }
+        public string StatusString { get { return Status.ToString(); } }
         public AggregatedSolution()
         {
             WorkSolutions = new List<WorkSolution>();
