@@ -164,10 +164,8 @@ namespace SolutionManagerUI.ViewModels
             {
                 _publishers = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Publishers"));
-                if (value != null)
-                {
-                    UpdateListToCollection(value, PublishersCollection);
-                }
+
+                UpdateListToCollection(value, PublishersCollection);
             }
         }
 
@@ -543,10 +541,10 @@ namespace SolutionManagerUI.ViewModels
             var description = new StringBuilder();
             description
                 .AppendLine(
-                    string.Format("## Solution generanted automatically by {0} at {1} ##",
+                    string.Format("## Solution generated automatically by {0} at {1} ##",
                     CurrentCrmConnection.Username,
                     DateTime.Now.ToString()));
-            if (WorkSolutions!=null)
+            if (WorkSolutions != null)
             {
                 foreach (var item in WorkSolutions)
                 {

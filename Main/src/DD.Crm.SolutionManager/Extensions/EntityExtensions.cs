@@ -21,6 +21,7 @@ namespace DD.Crm.SolutionManager.Extensions
             WorkSolution s = new WorkSolution();
             s.Id = e.GetParameter<Guid>(WorkSolution.AttributeDefinitions.Id);
             s.CreatedOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.CreatedOn);
+            s.CreatedBy = e.GetParameter<EntityReference>(WorkSolution.AttributeDefinitions.CreatedBy);
             s.ModifiedOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.ModifiedOn);
             s.Status = (WorkSolution.WorkSolutionStatus)
                             e.GetParameter<OptionSetValue>(WorkSolution.AttributeDefinitions.Status).Value;
@@ -43,6 +44,7 @@ namespace DD.Crm.SolutionManager.Extensions
             s.Id = e.GetParameter<Guid>(AggregatedSolution.AttributeDefinitions.Id);
             s.CreatedOn = e.GetParameter<DateTime>(AggregatedSolution.AttributeDefinitions.CreatedOn);
             s.ModifiedOn = e.GetParameter<DateTime>(AggregatedSolution.AttributeDefinitions.ModifiedOn);
+            s.CreatedBy = e.GetParameter<EntityReference>(AggregatedSolution.AttributeDefinitions.CreatedBy);
             s.Status = (AggregatedSolution.AggregatedSolutionStatus)
                             e.GetParameter<OptionSetValue>(AggregatedSolution.AttributeDefinitions.Status).Value;
             s.Name = e.GetParameter<string>(AggregatedSolution.AttributeDefinitions.Name);

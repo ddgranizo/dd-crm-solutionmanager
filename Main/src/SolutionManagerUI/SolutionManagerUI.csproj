@@ -151,6 +151,7 @@
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
     <Compile Include="ViewModels\DownloadBlobManagerViewModel.cs" />
+    <Compile Include="ViewModels\CreateSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\WorkSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
     <Compile Include="ViewModels\AggregatedSolutionManagerViewModel.cs" />
@@ -165,6 +166,9 @@
     <Compile Include="ViewModels\SolutionComponentViewModel.cs" />
     <Compile Include="Views\DownloadBlobManager.xaml.cs">
       <DependentUpon>DownloadBlobManager.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\CreateSolutionManager.xaml.cs">
+      <DependentUpon>CreateSolutionManager.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\WorkSolutionManager.xaml.cs">
       <DependentUpon>WorkSolutionManager.xaml</DependentUpon>
@@ -205,6 +209,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\DownloadBlobManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\CreateSolutionManager.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

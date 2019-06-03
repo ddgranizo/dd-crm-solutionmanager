@@ -23,7 +23,16 @@ namespace DD.Crm.SolutionManager.Utilities
     {
 
 
-
+        public static List<EntityReference> GetPublishers(IOrganizationService service)
+        {
+            var publisherEntityLogicalName = "publisher";
+            QueryExpression qe = new QueryExpression(publisherEntityLogicalName);
+            qe.ColumnSet = new ColumnSet(true);
+            return service.RetrieveMultiple(qe)
+                    .Entities
+                    .Select(k => new EntityReference(publisherEntityLogicalName, k.Id) { Name = k.GetAttributeValue<string>("friendlyname") })
+                    .ToList();
+        }
         public static void UpdateAggregatedSolutionStatus(IOrganizationService service, Guid workSolutionid, AggregatedSolution.AggregatedSolutionStatus status)
         {
             Entity e = new Entity(AggregatedSolution.EntityLogicalName);

@@ -159,6 +159,8 @@
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
@@ -172,8 +174,9 @@
                                                 </Grid>
                                                 
                                                 <TextBlock Margin="5,0,0,0" VerticalAlignment="Center" Grid.Column="3" Text="{Binding Name}"></TextBlock>
+                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
+                                                <TextBlock VerticalAlignment="Center"  Grid.Column="5" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
 
-                                                
 
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
@@ -279,6 +282,8 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
@@ -287,6 +292,9 @@
                                                     <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
                                                 </Label>
                                                 <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="2"></TextBlock>
+                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
+                                                <TextBlock VerticalAlignment="Center"  Grid.Column="4" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
+
 
                                                 <Grid.ContextMenu>
                                                     <ContextMenu>
@@ -329,18 +337,22 @@
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Reload solutions" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="Reload" Width="15" Height="15"/>
                                 </Button>
-
-                                <Label Grid.Column="2" VerticalAlignment="Center">Filter:</Label>
-                                <TextBox Grid.Column="3" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
-                                <Button Grid.Column="4" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                <Button Grid.Column="1"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create solution" Command="{Binding Source={StaticResource viewModel}, Path=CreateSolutionCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                    <materialDesign:PackIcon Kind="Plus" Width="15" Height="15"/>
+                                </Button>
+                                <Label Grid.Column="3" VerticalAlignment="Center">Filter:</Label>
+                                <TextBox Grid.Column="4" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                <Button Grid.Column="5" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="ArrowCollapseRight" Width="15" Height="15"/>
                                 </Button>
+
                             </Grid>
 
                             <ScrollViewer  x:Name="SolutionsListScrollViewer" Grid.Row="2" Visibility="{Binding IsSolutionMode, Converter={StaticResource BoolToCollapseConverter}}">

@@ -30,11 +30,15 @@ namespace DD.Crm.SolutionManager
 
 
 
+        public List<EntityReference> GetPublishers()
+        {
+            return CrmProvider.GetPublishers(_service);
+        }
+
         public void SetStatusAggregatedSolution(Guid aggregatedId, AggregatedSolution.AggregatedSolutionStatus status)
         {
             CrmProvider.UpdateAggregatedSolutionStatus(_service, aggregatedId, status);
         }
-
 
         public void UnsetMergedWithSupersolutionFlagInAggregatedSolution(Guid aggregatedId)
         {
@@ -45,7 +49,6 @@ namespace DD.Crm.SolutionManager
         {
             CrmProvider.UpdateAggregatedSolutionMergedWithSupersolutionFlag(_service, aggregatedId, true);
         }
-
 
         public void RemoveAggregatedSolution(Guid id)
         {

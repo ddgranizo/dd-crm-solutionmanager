@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xrm.Sdk;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -48,6 +49,7 @@ namespace DD.Crm.SolutionManager.Models
         public string Name { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }
+        public EntityReference CreatedBy { get; set; }
         public List<WorkSolution> WorkSolutions { get; set; }
 
         public bool IsMergedWithSupersolution { get; set; }

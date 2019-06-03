@@ -1233,7 +1233,51 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("SetStatusPreproductionAggregatedSolutionCommand", SetStatusPreproductionAggregatedSolutionCommand);
             Commands.Add("SetStatuProductionAggregatedSolutionCommand", SetStatuProductionAggregatedSolutionCommand);
 
+
+            Commands.Add("CreateSolutionCommand", CreateSolutionCommand);
         }
+
+
+
+        private ICommand _createSolutionCommand = null;
+        public ICommand CreateSolutionCommand
+        {
+            get
+            {
+                if (_createSolutionCommand == null)
+                {
+                    _createSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var publishers = CurrentSolutionManager.GetPublishers();
+                            CreateSolutionManager man = new CreateSolutionManager(
+                                this.Service,
+                                this.CurrentCrmConnection,
+                                this.CurrentSolutionManager,
+                                this.Settings,
+                                publishers);
+                            man.ShowDialog();
+                            var createdSolution = man.GetViewModel().CreatedSolution;
+                            if (createdSolution != null)
+                            {
+                                SelectSolutionAsync(createdSolution.Id);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _createSolutionCommand;
+            }
+        }
+
 
 
         private ICommand _setStatuProductionAggregatedSolutionCommand = null;

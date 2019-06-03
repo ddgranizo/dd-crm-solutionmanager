@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xrm.Sdk;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,7 +47,7 @@ namespace DD.Crm.SolutionManager.Models
         public string JiraUrl { get; set; }
         public string SolutionUrl { get; set; }
         public Guid SolutionId { get; set; }
-
+        public EntityReference CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime ModifiedOn { get; set; }
 
