@@ -226,11 +226,19 @@ namespace SolutionManagerUI.ViewModels
                 var errorMessage = string.Empty;
                 try
                 {
-                    var workSolutionId = CurrentSolutionManager.CreateWorkSolution(this.Name, this.Jira);
-                    if (CurrentWorkSolution != null)
+                    if (IsCreateingMode)
                     {
+                        var workSolutionId = CurrentSolutionManager.CreateWorkSolution(this.Name, this.Jira);
                         CurrentSolutionManager.AssignWorkSolutionToAggregatedSolution(AggregatedSolution.Id, workSolutionId);
                     }
+                    else
+                    {
+                        if (CurrentWorkSolution != null)
+                        {
+                            CurrentSolutionManager.AssignWorkSolutionToAggregatedSolution(AggregatedSolution.Id, CurrentWorkSolution.Id);
+                        }
+                    }
+                   
                 }
                 catch (Exception ex)
                 {
