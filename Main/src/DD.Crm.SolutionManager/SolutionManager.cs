@@ -30,6 +30,15 @@ namespace DD.Crm.SolutionManager
 
 
 
+
+
+
+
+        public List<Dependency> GetSolutionDependencies(Guid solutionId)
+        {
+            return CrmProvider.GetSolutionDependencies(_service, solutionId);
+        }
+
         public List<EntityReference> GetPublishers()
         {
             return CrmProvider.GetPublishers(_service);
@@ -58,6 +67,16 @@ namespace DD.Crm.SolutionManager
         public void RemoveWorkSolution(Guid id)
         {
             CrmProvider.RemoveWorkSolution(_service, id);
+        }
+
+        public void SetDependenciesKOForWorkSolution(Guid id, string error)
+        {
+            CrmProvider.UpdateWorkSolutionDependenciesCheck(_service, id, false, error);
+        }
+
+        public void SetDependenciesOKForWorkSolution(Guid id)
+        {
+            CrmProvider.UpdateWorkSolutionDependenciesCheck(_service, id, true);
         }
 
         public void SetReadyWorkSolution(Guid id)
@@ -267,10 +286,16 @@ namespace DD.Crm.SolutionManager
             return CrmProvider.GetSolution(this._service, uniqueName);
         }
 
+        public Solution GetSolution(Guid id)
+        {
+            return CrmProvider.GetSolution(this._service, id);
+        }
+
         public List<WorkSolution> GetWorkSolutions(List<AggregatedSolution> aggregatedSolutions)
         {
             return GetWorkSolutions(aggregatedSolutions.Select(k => { return k.Id; }).ToList());
         }
+
 
         public List<WorkSolution> GetWorkSolutions(List<Guid> aggregatedSolutionsIds)
         {

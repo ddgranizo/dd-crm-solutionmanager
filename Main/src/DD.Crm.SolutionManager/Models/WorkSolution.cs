@@ -33,7 +33,9 @@ namespace DD.Crm.SolutionManager.Models
             public const string SolutionUrl = "alm_solutionurl";
             public const string Status = "statuscode";
             public const string State = "statecode";
-            
+            public const string CheckedDependenciesOn = "alm_checkeddependencieson";
+            public const string AreAllDependencies = "alm_arealldependencies";
+            public const string Error = "alm_error";
         }
 
 
@@ -49,8 +51,13 @@ namespace DD.Crm.SolutionManager.Models
         public Guid SolutionId { get; set; }
         public EntityReference CreatedBy { get; set; }
         public DateTime CreatedOn { get; set; }
-        public DateTime ModifiedOn { get; set; }
 
+        public DateTime CheckedDependenciesOn { get; set; }
+        public DateTime ModifiedOn { get; set; }
+        public bool AreAllDependencies { get; set; }
+
+        public bool IsDependencyError { get { return !AreAllDependencies && !string.IsNullOrEmpty(Error); } }
+        public string Error { get; set; }
         public WorkSolution()
         {
 

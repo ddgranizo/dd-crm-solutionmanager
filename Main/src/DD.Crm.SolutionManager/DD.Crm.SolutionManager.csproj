@@ -83,8 +83,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\DependencyExtensions.cs" />
     <Compile Include="Extensions\EntityExtensions.cs" />
     <Compile Include="IEntity.cs" />
+    <Compile Include="Models\Dependency.cs" />
     <Compile Include="Models\AggregatedSolution.cs" />
     <Compile Include="Models\Component.cs" />
     <Compile Include="Models\Data\BaseEntity.cs" />

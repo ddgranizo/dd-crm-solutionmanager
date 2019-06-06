@@ -22,11 +22,43 @@ namespace DD.Crm.SolutionManager.Utilities
     public static class CrmProvider
     {
 
+        public static List<Dependency> GetSolutionDependencies(IOrganizationService service, Guid solutionId)
+        {
+            var dependencies = new List<Dependency>();
+            var components = GetSolutionComponents(service, solutionId, false);
+            foreach (var component in components)
+            {
+                var req = new RetrieveRequiredComponentsRequest()
+                {
+                    ComponentType = (int)component.Type,
+                    ObjectId = component.ObjectId,
+                };
+                var response = (RetrieveRequiredComponentsResponse)service.Execute(req);
+                foreach (var dependency in response.EntityCollection.Entities.Select(k => k.ToDependency()).ToList())
+                {
+                    var foundAlready = dependencies.FirstOrDefault(k => k.Id == dependency.Id);
+                    if (foundAlready == null)
+                    {
+                        dependencies.Add(dependency);
+                    }
+                }
+            }
+
+            return dependencies;
+            //var dependencyRequest = new RetrieveMissingDependenciesRequest()
+            //{
+            //    SolutionUniqueName = solutionUniqueName
+            //};
+            //var response = (RetrieveMissingDependenciesResponse)service.Execute(dependencyRequest);
+            //return response.EntityCollection.Entities.Select(k => k.ToDependency()).ToList();
+        }
+
 
         public static List<EntityReference> GetPublishers(IOrganizationService service)
         {
             var publisherEntityLogicalName = "publisher";
             QueryExpression qe = new QueryExpression(publisherEntityLogicalName);
+            qe.AddOrder("createdon", OrderType.Descending);
             qe.ColumnSet = new ColumnSet(true);
             return service.RetrieveMultiple(qe)
                     .Entities
@@ -59,6 +91,21 @@ namespace DD.Crm.SolutionManager.Utilities
         {
             service.Delete(WorkSolution.EntityLogicalName, workSolutionid);
         }
+
+
+        public static void UpdateWorkSolutionDependenciesCheck(IOrganizationService service, Guid workSolutionid, bool areAllDependencies, string error = null)
+        {
+            Entity e = new Entity(WorkSolution.EntityLogicalName);
+            e.Id = workSolutionid;
+            e[WorkSolution.AttributeDefinitions.AreAllDependencies] = areAllDependencies;
+            e[WorkSolution.AttributeDefinitions.CheckedDependenciesOn] = DateTime.Now;
+            if (!string.IsNullOrEmpty(error))
+            {
+                e[WorkSolution.AttributeDefinitions.Error] = error;
+            }
+            service.Update(e);
+        }
+
 
         public static void UpdateWorkSolutionStatus(IOrganizationService service, Guid workSolutionid, WorkSolution.WorkSolutionStatus status)
         {
@@ -167,7 +214,7 @@ namespace DD.Crm.SolutionManager.Utilities
             {
                 componentsId = GetWorkflowWithName(service, value);
             }
-            return componentsId.Count>0 ? GetComponentsWithId(service, componentsId) : new List<SolutionComponentBase>();
+            return componentsId.Count > 0 ? GetComponentsWithId(service, componentsId) : new List<SolutionComponentBase>();
         }
 
 
@@ -412,6 +459,7 @@ namespace DD.Crm.SolutionManager.Utilities
         public static List<Solution> FindEmptySolutions(IOrganizationService service)
         {
             QueryExpression qe = new QueryExpression(Solution.EntityLogicalName);
+            qe.AddOrder("createdon", OrderType.Descending);
             qe.ColumnSet = new ColumnSet(true);
             var solutionList = service.RetrieveMultiple(qe)
                                  .Entities
@@ -590,6 +638,7 @@ namespace DD.Crm.SolutionManager.Utilities
         {
             QueryExpression qe = new QueryExpression(WorkSolution.EntityLogicalName);
             qe.ColumnSet = new ColumnSet(true);
+            qe.AddOrder("createdon", OrderType.Descending);
             var entities = service.RetrieveMultiple(qe)
                     .Entities;
             return entities
@@ -602,6 +651,7 @@ namespace DD.Crm.SolutionManager.Utilities
         {
             QueryByAttribute qe = new QueryByAttribute(WorkSolution.EntityLogicalName);
             qe.ColumnSet = new ColumnSet(true);
+            qe.AddOrder("createdon", OrderType.Descending);
             qe.AddAttributeValue(WorkSolution.AttributeDefinitions.Status, (int)WorkSolution.WorkSolutionStatus.Development);
             var entities = service.RetrieveMultiple(qe)
                     .Entities;
@@ -640,6 +690,7 @@ namespace DD.Crm.SolutionManager.Utilities
                             }
                         }
             };
+            qe.AddOrder("createdon", OrderType.Descending);
 
             var entities = service.RetrieveMultiple(qe)
                     .Entities;
@@ -660,13 +711,13 @@ namespace DD.Crm.SolutionManager.Utilities
         }
 
 
-        public static Entity GetRibbonData(IOrganizationService service,  Guid objectId)
+        public static Entity GetRibbonData(IOrganizationService service, Guid objectId)
         {
             QueryByAttribute qe = new QueryByAttribute(new RibbonData().EntityLogicalName);
             qe.ColumnSet = new ColumnSet(true);
             qe.AddAttributeValue("ribboncustomizationid", objectId);
             var entities = service.RetrieveMultiple(qe).Entities;
-            if (entities.Count>0)
+            if (entities.Count > 0)
             {
                 return entities[0];
             }
@@ -754,6 +805,7 @@ namespace DD.Crm.SolutionManager.Utilities
         public static Solution GetSolution(IOrganizationService service, string uniqueName)
         {
             QueryByAttribute qe = new QueryByAttribute(Solution.EntityLogicalName);
+            qe.AddOrder("createdon", OrderType.Descending);
             qe.AddAttributeValue(Solution.AttributeDefinitions.UniqueName, uniqueName);
             qe.ColumnSet = new ColumnSet(true);
             return service.RetrieveMultiple(qe)
@@ -766,6 +818,7 @@ namespace DD.Crm.SolutionManager.Utilities
         {
             QueryExpression qe = new QueryExpression(Solution.EntityLogicalName);
             qe.ColumnSet = new ColumnSet(true);
+            qe.AddOrder("createdon", OrderType.Descending);
             return service.RetrieveMultiple(qe)
                     .Entities
                     .Select(k => { return k.ToSolution(); })
@@ -776,6 +829,7 @@ namespace DD.Crm.SolutionManager.Utilities
         {
             QueryExpression qe = new QueryExpression(Solution.EntityLogicalName);
             qe.ColumnSet = new ColumnSet(true);
+            qe.AddOrder("createdon", OrderType.Descending);
             FilterExpression fe = new FilterExpression(LogicalOperator.Or);
             foreach (var id in solutionsId)
             {

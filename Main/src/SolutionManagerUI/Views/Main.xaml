@@ -39,6 +39,7 @@
             <conv:AggregatedSolutionStatusToBackgroundConverter x:Key="AggregatedSolutionStatusToBackgroundConverter" />
             <conv:IndexConverter x:Key="IndexConverter" />
             <conv:IsManagedToFontColorConverter x:Key="IsManagedToFontColorConverter" />
+            <conv:StringToCollapsedConverter x:Key="StringToCollapsedConverter" />
         </Grid.Resources>
 
         <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
@@ -244,6 +245,7 @@
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="auto"/>
                                 </Grid.ColumnDefinitions>
@@ -256,10 +258,13 @@
                                 <Button Grid.Column="2"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create work solution" Command="{Binding Source={StaticResource viewModel}, Path=CreateWorkSolutionCommand, Mode=OneWay}" >
                                     <materialDesign:PackIcon Kind="Add" Width="15" Height="15"/>
                                 </Button>
-
-                                <Label Grid.Column="4" VerticalAlignment="Center">Filter:</Label>
-                                <TextBox Grid.Column="5" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
-                                <Button Grid.Column="6" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
+                                <Button Grid.Column="3"  Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show all work solutions" Command="{Binding Source={StaticResource viewModel}, Path=SetAllWorkSolutionsCommand, Mode=OneWay}" >
+                                    <materialDesign:PackIcon Kind="Filter" Width="15" Height="15"/>
+                                </Button>
+                                
+                                <Label Grid.Column="5" VerticalAlignment="Center">Filter:</Label>
+                                <TextBox Grid.Column="6" VerticalAlignment="Center" Text="{Binding SolutionFilter, UpdateSourceTrigger=PropertyChanged}"></TextBox>
+                                <Button Grid.Column="7" Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Show components" Command="{Binding Source={StaticResource viewModel}, Path=ReloadSolutionComponentsCommand, Mode=OneWay}" CommandParameter="{Binding}">
                                     <materialDesign:PackIcon Kind="ArrowCollapseRight" Width="15" Height="15"/>
                                 </Button>
                             </Grid>
@@ -284,6 +289,8 @@
                                                     <ColumnDefinition Width="100"/>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
@@ -292,8 +299,19 @@
                                                     <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
                                                 </Label>
                                                 <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="2"></TextBlock>
-                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
-                                                <TextBlock VerticalAlignment="Center"  Grid.Column="4" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
+
+
+                                                <Grid ToolTip="Dependencies OK" Margin="5" Grid.Column="3" Visibility="{Binding AreAllDependencies, Converter={StaticResource BoolToCollapseConverter}}">
+                                                    <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="LawnGreen"  Icon="Check" Height="16" Width="16" />
+                                                </Grid>
+
+                                                <Grid ToolTip="Dependencies KO" Margin="5" Grid.Column="3" Visibility="{Binding IsDependencyError, Converter={StaticResource BoolToCollapseConverter}}">
+                                                    <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Red" Icon="Bug" Height="16" Width="16" />
+                                                </Grid>
+
+
+                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
+                                                <TextBlock VerticalAlignment="Center"  Grid.Column="6" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
 
 
                                                 <Grid.ContextMenu>
@@ -302,6 +320,8 @@
                                                         <MenuItem Header="Set not ready" Command="{Binding Source={StaticResource viewModel}, Path=SetNotReadyWorkSolutionCommand, Mode=OneWay}" />
                                                         <Separator />
                                                         <MenuItem Header="Remove" Command="{Binding Source={StaticResource viewModel}, Path=RemoveWorkSolutionCommand, Mode=OneWay}" />
+                                                        <Separator />
+                                                        <MenuItem Header="Check dependencies" Command="{Binding Source={StaticResource viewModel}, Path=CheckDependenciesCommand, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
 

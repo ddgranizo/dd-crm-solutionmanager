@@ -1157,7 +1157,49 @@ namespace SolutionManagerUI.ViewModels
         }
 
 
-        
+
+        private Guid _retrieveAllWorkSolutionsTaskId = Guid.NewGuid();
+        public void ReloadAllWorkSolutions()
+        {
+            IsRetrievingWorkSolutions = true;
+            SolutionComponents = null;
+            ThreadManager.Instance.ScheduleTask(() =>
+            {
+                var workSolutions = new List<WorkSolution>();
+                var isError = false;
+                var errorMessage = string.Empty;
+                try
+                {
+                    workSolutions = CurrentSolutionManager.GetAllWorkSolutions();
+                }
+                catch (Exception ex)
+                {
+                    isError = true;
+                    errorMessage = ex.Message;
+                }
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    if (isError)
+                    {
+                        MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                    else
+                    {
+                        this.WorkSolutions = workSolutions;
+                        ICommand c = MarkUnmarkAllWorkSolutionsCommand;
+                        if (c.CanExecute(null))
+                        {
+                            c.Execute(null);
+                        }
+                    }
+                    IsRetrievingWorkSolutions = false;
+                });
+            }, string.Empty, _retrieveAllWorkSolutionsTaskId);
+
+
+
+        }
+
 
         protected override void RegisterCommands()
         {
@@ -1235,8 +1277,73 @@ namespace SolutionManagerUI.ViewModels
 
 
             Commands.Add("CreateSolutionCommand", CreateSolutionCommand);
+
+            Commands.Add("SetAllWorkSolutionsCommand", SetAllWorkSolutionsCommand);
         }
 
+
+
+        private ICommand _checkDependenciesCommand = null;
+        public ICommand CheckDependenciesCommand
+        {
+            get
+            {
+                if (_checkDependenciesCommand == null)
+                {
+                    _checkDependenciesCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            CheckWorkSolutionDependenciesManager man = new CheckWorkSolutionDependenciesManager(
+                                this.Service,
+                                this.CurrentCrmConnection,
+                                this.CurrentSolutionManager,
+                                this.Settings,
+                                this.Connections,
+                                this.SelectedWorkSolution);
+                            man.ShowDialog();
+                            
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedWorkSolution != null;
+                    });
+                }
+                return _checkDependenciesCommand;
+            }
+        }
+
+
+        private ICommand _setAllWorkSolutionsCommand = null;
+        public ICommand SetAllWorkSolutionsCommand
+        {
+            get
+            {
+                if (_setAllWorkSolutionsCommand == null)
+                {
+                    _setAllWorkSolutionsCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ReloadAllWorkSolutions();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null;
+
+                    });
+                }
+                return _setAllWorkSolutionsCommand;
+            }
+        }
 
 
         private ICommand _createSolutionCommand = null;
@@ -2231,7 +2338,7 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
+                            //CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
                             var settings = AppDataManager.LoadSettings();
                             MergeSolutionsManager mergeManager =
                                 new MergeSolutionsManager(

@@ -12,6 +12,34 @@ namespace DD.Crm.SolutionManager.Extensions
     public static class EntityExtensions
     {
 
+
+        public static Dependency ToDependency(this Entity e)
+        {
+            Dependency d = new Dependency();
+            d.Id = e.Id;
+            d.DependencyType = (DependencyType)
+                e.GetAttributeValue<OptionSetValue>(Dependency.AttributeDefinitions.DependencyType).Value;
+
+            d.DependentComponentBaseSolutionid = e.GetAttributeValue<Guid>(Dependency.AttributeDefinitions.DependentComponentBaseSolutionid);
+            d.DependentComponentObjectId = e.GetAttributeValue<Guid>(Dependency.AttributeDefinitions.DependentComponentObjectId);
+            d.DependentComponentParentId = e.GetAttributeValue<Guid>(Dependency.AttributeDefinitions.DependentComponentParentId);
+            
+
+            d.RequiredComponentType = (SolutionComponentType)
+                e.GetAttributeValue<OptionSetValue>(Dependency.AttributeDefinitions.RequiredComponentType).Value;
+
+            d.RequiredComponentBaseSolutionId = e.GetAttributeValue<Guid>(Dependency.AttributeDefinitions.RequiredComponentBaseSolutionId);
+            d.RequiredComponentObjectId = e.GetAttributeValue<Guid>(Dependency.AttributeDefinitions.RequiredComponentObjectId);
+            d.RequiredComponentParentId = e.GetAttributeValue<Guid>(Dependency.AttributeDefinitions.RequiredComponentParentId);
+
+            d.DependentComponentType = (SolutionComponentType)
+                e.GetAttributeValue<OptionSetValue>(Dependency.AttributeDefinitions.DependentComponentType).Value;
+
+            return d;
+        }
+
+
+
         public static WorkSolution ToWorkSolution(this Entity e)
         {
             if (e.LogicalName != WorkSolution.EntityLogicalName)
@@ -21,8 +49,15 @@ namespace DD.Crm.SolutionManager.Extensions
             WorkSolution s = new WorkSolution();
             s.Id = e.GetParameter<Guid>(WorkSolution.AttributeDefinitions.Id);
             s.CreatedOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.CreatedOn);
+            s.CheckedDependenciesOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.CheckedDependenciesOn);
+
             s.CreatedBy = e.GetParameter<EntityReference>(WorkSolution.AttributeDefinitions.CreatedBy);
             s.ModifiedOn = e.GetParameter<DateTime>(WorkSolution.AttributeDefinitions.ModifiedOn);
+
+            s.AreAllDependencies = e.GetParameter<bool>(WorkSolution.AttributeDefinitions.AreAllDependencies);
+            s.Error = e.GetParameter<string>(WorkSolution.AttributeDefinitions.Error);
+
+
             s.Status = (WorkSolution.WorkSolutionStatus)
                             e.GetParameter<OptionSetValue>(WorkSolution.AttributeDefinitions.Status).Value;
             s.Name = e.GetParameter<string>(WorkSolution.AttributeDefinitions.Name);
@@ -135,7 +170,7 @@ namespace DD.Crm.SolutionManager.Extensions
             {
                 sitemap.DisplayName = "## CRM Sitemap";
             }
-            
+
             return sitemap;
         }
 

@@ -120,6 +120,7 @@
     <Compile Include="Controls\SolutionComponent.xaml.cs">
       <DependentUpon>SolutionComponent.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\StringToCollapsedConverter.cs" />
     <Compile Include="Converters\IsManagedToFontColorConverter.cs" />
     <Compile Include="Converters\IndexConverter.cs" />
     <Compile Include="Converters\AggregatedSolutionStatusToBackgroundConverter.cs" />
@@ -150,6 +151,7 @@
     <Compile Include="Utilities\System32.cs" />
     <Compile Include="Utilities\Threads\ThreadManager.cs" />
     <Compile Include="Utilities\Threads\ThreadTask.cs" />
+    <Compile Include="ViewModels\CheckWorkSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\DownloadBlobManagerViewModel.cs" />
     <Compile Include="ViewModels\CreateSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\WorkSolutionManagerViewModel.cs" />
@@ -164,6 +166,9 @@
     <Compile Include="ViewModels\ConnectionManagerViewModel.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />
     <Compile Include="ViewModels\SolutionComponentViewModel.cs" />
+    <Compile Include="Views\CheckWorkSolutionDependenciesManager.xaml.cs">
+      <DependentUpon>CheckWorkSolutionDependenciesManager.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\DownloadBlobManager.xaml.cs">
       <DependentUpon>DownloadBlobManager.xaml</DependentUpon>
     </Compile>
@@ -207,6 +212,10 @@
     <Page Include="Controls\SolutionComponent.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CheckWorkSolutionDependenciesManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\DownloadBlobManager.xaml">
       <Generator>MSBuild:Compile</Generator>
