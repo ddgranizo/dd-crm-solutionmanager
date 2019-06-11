@@ -256,7 +256,7 @@ namespace SolutionManagerUI.ViewModels
                 try
                 {
                     UpdateDialogMessage($"Publishing all customizations...");
-                    //CurrentSolutionManager.PublishAll();
+                    CurrentSolutionManager.PublishAll();
                     List<Solution> affectedSuperSolutions = GetAffectedSuperSolutions();
                     UpdateDialogMessage($"Cloning affected solutions... ({affectedSuperSolutions.Count})");
                     mappingsWithBackpus = CloneAffectedSolutions(affectedSuperSolutions);
