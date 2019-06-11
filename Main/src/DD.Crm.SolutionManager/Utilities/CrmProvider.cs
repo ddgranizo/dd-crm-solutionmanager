@@ -843,6 +843,18 @@ namespace DD.Crm.SolutionManager.Utilities
         }
 
 
+
+        public static SolutionComponentBase GetComponentDefinition(IOrganizationService service, Guid solutionComponentId)
+        {
+
+            SolutionComponentBase item =
+                service.Retrieve(SolutionComponentBase.EntityLogicalName, solutionComponentId, new ColumnSet(true))
+                .ToSolutionComponent();
+            item.ObjectDefinition = CrmProvider.RetrieveObjectDefinition(service, item);
+            return item;
+        }
+
+
         public static List<SolutionComponentBase> GetSolutionComponents(IOrganizationService service, Guid solutionId, bool expandDefinition = false)
         {
             QueryExpression qe = new QueryExpression(SolutionComponentBase.EntityLogicalName);

@@ -26,17 +26,13 @@ namespace SolutionManagerUI.ViewModels
 
     public delegate void OnRequetedSelectionListHandler(object sender, EventArgs e);
 
-
-
-
-
     public class MainViewModel : BaseViewModel
     {
         public const string DefaultSolutionUniqueName = "Default";
         public const string ActiveSolutionUniqueName = "Active";
         public const string DefaultExportPathSettingKey = "SOLUTION_OUTPUT_DIRECTORY";
-        
-
+        public const string CheckDependenciesSettingKey = "CHECK_DEPENDENCIES_WHEN_AGGREGATION";
+        public const bool DefaultCheckDependenciesSettingValue = true;
         public event OnRequetedSelectionListHandler OnRequetedSelectAllWorkSolutions;
         public event OnRequetedSelectionListHandler OnRequetedUnselectAllWorkSolutions;
 
@@ -53,6 +49,14 @@ namespace SolutionManagerUI.ViewModels
                 _isAggregatedWorkSolutionMode = value;
                 OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("IsAggregatedWorkSolutionMode"));
                 RaiseCanExecuteChanged();
+                if (value)
+                {
+                    var command = ReloadAggregatedSolutionsCommand;
+                    if (command.CanExecute(null))
+                    {
+                        command.Execute(null);
+                    }
+                }
             }
         }
 
@@ -852,7 +856,7 @@ namespace SolutionManagerUI.ViewModels
                     .Add(new ResourceDictionary()
                     { Source = new Uri($"pack://application:,,,/MaterialDesignColors;component/Themes/Recommended/Primary/MaterialDesignColor.{theme}.xaml") });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     MessageBox.Show($"Theme '{theme}' does not exists. Use theme names as 'Red', 'LightBlue' etc");
                 }
@@ -2311,11 +2315,12 @@ namespace SolutionManagerUI.ViewModels
                         try
                         {
                             CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
-
                         }
                         catch (Exception ex)
                         {
-                            RaiseError(ex.Message);
+                            System.Windows.Clipboard.SetText(ex.Message);
+                            var newMessage = $"(Copied to clipboard)\r\n{ex.Message}";
+                            RaiseError(newMessage);
                         }
                     }, (param) =>
                     {
@@ -2338,7 +2343,11 @@ namespace SolutionManagerUI.ViewModels
                     {
                         try
                         {
-                            //CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
+                            var checkAggregatedSolution = SettingsManager.GetSetting<bool>(Settings, CheckDependenciesSettingKey, DefaultCheckDependenciesSettingValue);
+                            if (checkAggregatedSolution)
+                            {
+                                CurrentSolutionManager.CheckAggregatedSolution(SelectedAggregatedSolution);
+                            }
                             var settings = AppDataManager.LoadSettings();
                             MergeSolutionsManager mergeManager =
                                 new MergeSolutionsManager(
@@ -2362,7 +2371,9 @@ namespace SolutionManagerUI.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            RaiseError(ex.Message);
+                            System.Windows.Clipboard.SetText(ex.Message);
+                            var newMessage = $"(Copied to clipboard)\r\n{ex.Message}";
+                            RaiseError(newMessage);
                         }
                     }, (param) =>
                     {

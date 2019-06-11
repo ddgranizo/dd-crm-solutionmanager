@@ -147,7 +147,7 @@ namespace SolutionManagerUI.Utilities
                         var serializer = new XmlSerializer(typeof(List<Setting>));
                         config = serializer.Deserialize(stream) as List<Setting>;
                     }
-                    return config;
+                    return config.OrderBy(k=>k.Key).ToList();
                 }
             }
             return new List<Setting>();

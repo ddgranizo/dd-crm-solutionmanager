@@ -284,8 +284,7 @@ namespace SolutionManagerUI.ViewModels
                     }
                     UnsetDialog();
                 });
-            }, "Merging solution components...", _mergeTaskId);
-
+            }, string.Empty, _mergeTaskId);
 
         }
 
@@ -490,11 +489,11 @@ namespace SolutionManagerUI.ViewModels
                         .ToList();
                 foreach (var type in typesAllowed)
                 {
-                    if (type.IndexOf("_")>-1)
+                    if (type.IndexOf("_") > -1)
                     {
                         output.AddRange(SolutionComponents
                             .Where(k => k.Type == SolutionComponentType.WebResource)
-                            .Where(k=> ((WebResourceData)k.ObjectDefinition).WebResourceType.ToString() == type.Split('_')[1]));
+                            .Where(k => ((WebResourceData)k.ObjectDefinition).WebResourceType.ToString() == type.Split('_')[1]));
                     }
                     else
                     {

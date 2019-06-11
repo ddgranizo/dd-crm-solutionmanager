@@ -216,45 +216,85 @@ namespace DD.Crm.SolutionManager
                 throw new Exception($"Selected aggregated solution contains open work solutions:\r\n{openSolutions}");
             }
 
-            StringBuilder st = new StringBuilder();
-            st.AppendLine();
-            bool foundOne = false;
+            
             var allOpenSolutions = GetAllOpenWorkSolutions();
-            var allOpenComponents = GetMergedSolutionComponents(allOpenSolutions);
 
-            foreach (var workSolution in workSolutions)
+            Dictionary<string, List<MergedInSolutionComponent>> componentsInWorkSolutions = new Dictionary<string, List<MergedInSolutionComponent>>();
+            Dictionary<string, List<MergedInSolutionComponent>> componentsInOpenSolutions = new Dictionary<string, List<MergedInSolutionComponent>>();
+            foreach (var item in workSolutions)
             {
-                List<WorkSolution> w = new List<WorkSolution>() { workSolution };
-                var workComponents = GetMergedSolutionComponents(w);
-
-                List<MergedInSolutionComponent> blockedComponents = new List<MergedInSolutionComponent>();
-                foreach (var component in allOpenComponents)
-                {
-                    var foundSameComponentInOpen = allOpenComponents.FirstOrDefault(k => k.ObjectId == component.ObjectId);
-                    if (foundSameComponentInOpen != null)
-                    {
-                        blockedComponents.Add(foundSameComponentInOpen);
-                    }
-                }
-                if (blockedComponents.Count > 0)
-                {
-                    foundOne = true;
-                    st.AppendLine($"- WorkSolution: {workSolution.Name}");
-                    StringBuilder foundComponents = new StringBuilder();
-
-                    CrmProvider.UpdateComponentsDefinition(_service, blockedComponents.Cast<SolutionComponentBase>().ToList());
-                    foreach (var component in blockedComponents)
-                    {
-                        var def = ((BaseEntity)component.ObjectDefinition);
-                        foundComponents.AppendLine($"\t- {def.DisplayName} of type {component.TypeString}");
-                    }
-                    st.AppendLine(foundComponents.ToString());
-                }
+                componentsInWorkSolutions.Add($"{item.Name} - {item.Jira}", GetMergedSolutionComponents(new List<Guid>() { item.SolutionId }));
             }
-            if (foundOne)
+
+            foreach (var item in allOpenSolutions)
             {
-                throw new Exception($"Next component have been used in other open work solutions and cannot be added to the general solution: {st.ToString()}");
+                componentsInOpenSolutions.Add($"{item.Name} - {item.Jira}", GetMergedSolutionComponents(new List<Guid>() { item.SolutionId }));
             }
+
+
+            var allWorkComponents = new List<MergedInSolutionComponent>();
+            foreach (var item in componentsInWorkSolutions)
+            {
+                allWorkComponents.AddRange(item.Value);
+            }
+
+            var allOpenComponents = new List<MergedInSolutionComponent>();
+            foreach (var item in componentsInOpenSolutions)
+            {
+                allOpenComponents.AddRange(item.Value);
+            }
+
+            var mixedComponents =
+                allOpenComponents
+                .Select(k => k.ObjectId)
+                .Intersect(
+                    allWorkComponents
+                    .Select(k => k.ObjectId))
+                .GroupBy(k => k)
+                .ToList();
+
+
+
+            if (mixedComponents.Count>0)
+            {
+                StringBuilder st = new StringBuilder();
+                foreach (var mixedComponent in mixedComponents)
+                {
+                    var component = allOpenComponents.FirstOrDefault(k => k.ObjectId == mixedComponent.Key);
+                    var componentDefinition = GetComponentWithDefinition(component.Id);
+
+                    st.AppendLine($"#### Component {componentDefinition.DisplayName} ({componentDefinition.TypeString}) ####");
+                    st.AppendLine($"Found in Ready2Int solutions:");
+                    foreach (var item in componentsInWorkSolutions)
+                    {
+                        var components = item.Value;
+                        if (components.Where(k=>k.ObjectId == component.ObjectId).Count()>0)
+                        {
+                            st.AppendLine($"\t- {item.Key}");
+                        }
+                    }
+
+                    st.AppendLine($"Found in Development solutions:");
+                    foreach (var item in componentsInOpenSolutions)
+                    {
+                        var components = item.Value;
+                        if (components.Where(k => k.ObjectId == component.ObjectId).Count() > 0)
+                        {
+                            st.AppendLine($"\t- {item.Key}");
+                        }
+                    }
+                    st.AppendLine();
+                }
+
+                throw new Exception(st.ToString());
+            }
+
+        }
+
+
+        public SolutionComponentBase GetComponentWithDefinition(Guid solutionComponentId)
+        {
+            return CrmProvider.GetComponentDefinition(_service, solutionComponentId);
         }
 
         public Solution CreateSolution(string name, string uniqueName, EntityReference pubisher, string description)
