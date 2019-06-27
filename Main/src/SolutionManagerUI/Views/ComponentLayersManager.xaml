@@ -1,0 +1,92 @@
+﻿<Window x:Class="SolutionManagerUI.Views.ComponentLayersManager"
+         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:System="clr-namespace:System;assembly=mscorlib"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        
+        xmlns:vm="clr-namespace:SolutionManagerUI.ViewModels"
+        xmlns:conv="clr-namespace:SolutionManagerUI.Converters" 
+        xmlns:custom="clr-namespace:SolutionManagerUI.Controls"
+        
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal" 
+        TextOptions.TextRenderingMode="Auto"        
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        Title="Component layers" Height="300" Width="400">
+    <Grid x:Name="LayoutRoot"  Background="White" >
+        <Grid.Resources>
+            <vm:ComponentLayersManagerViewModel x:Key="viewModel" d:IsDataSource="True"></vm:ComponentLayersManagerViewModel>
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <conv:BoolToCollapseConverter x:Key="BoolToCollapseConverter" />
+            <conv:IndexConverter x:Key="IndexConverter" />
+            <conv:WorkSolutionStatusToBackgroundConverter x:Key="WorkSolutionStatusToBackgroundConverter" />
+            <ObjectDataProvider x:Key="operationTypes" MethodName="GetValues" ObjectType="{x:Type System:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="vm:WorkOperationType"/>
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
+        </Grid.Resources>
+
+
+
+        <Grid DataContext="{Binding Source={StaticResource viewModel}}" >
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <materialDesign:DialogHost Grid.Column="0" Grid.ColumnSpan="2" IsOpen="{Binding IsDialogOpen}" Grid.RowSpan="3" Panel.ZIndex="1000">
+                <materialDesign:DialogHost.DialogContent>
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="1" Text="{Binding MessageDialog}" />
+                    </Grid>
+                </materialDesign:DialogHost.DialogContent>
+            </materialDesign:DialogHost>
+
+
+
+            <Grid Grid.Column="0">
+                <GroupBox Header="Component layers">
+                    <Grid>
+                        
+                        <Grid.ColumnDefinitions >
+                            <ColumnDefinition Width="auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Grid.RowDefinitions>
+                            
+                            <RowDefinition Height="auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Orientation="Horizontal"  Grid.Row="6" Grid.Column="1" HorizontalAlignment="Right" >
+                            <Button  Margin="5,0,5,0"  Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Cancel" Command="{Binding Source={StaticResource viewModel}, Path=CancelCommand, Mode=OneWay}">
+                                <materialDesign:PackIcon Kind="Cancel" Width="15" Height="15"/>
+                            </Button>
+
+                            <Button   Margin="5,0,5,0" Height="30"  Width="30" Style="{DynamicResource  MaterialDesignFloatingActionLightButton}" ToolTip="Create" Command="{Binding Source={StaticResource viewModel}, Path=CreateWorkSolutionCommand, Mode=OneWay}">
+                                <materialDesign:PackIcon Kind="Play" Width="15" Height="15"/>
+                            </Button>
+                        </StackPanel>
+                        
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </Grid>
+
+    </Grid>
+</Window>

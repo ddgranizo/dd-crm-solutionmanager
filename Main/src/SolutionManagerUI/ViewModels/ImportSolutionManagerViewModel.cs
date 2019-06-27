@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
 
@@ -134,7 +135,7 @@ namespace SolutionManagerUI.ViewModels
             RegisterCommands();
 
             this.Path = path;
-            
+
         }
 
         private Guid _importTaskId = Guid.NewGuid();
@@ -169,6 +170,14 @@ namespace SolutionManagerUI.ViewModels
                     if (isError)
                     {
                         MessageBox.Show(errorMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        var dependencies = GetRequiredDependencies(errorMessage);
+                        if (dependencies != null && !string.IsNullOrEmpty(dependencies.Trim()))
+                        {
+
+                            System.Windows.Clipboard.SetText(dependencies);
+                            var newMessage = $"(Copied to clipboard)\r\n{dependencies}";
+                            MessageBox.Show(dependencies, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
                     }
                     else
                     {
@@ -177,6 +186,94 @@ namespace SolutionManagerUI.ViewModels
                     UnsetDialog();
                 });
             }, string.Empty, _importTaskId);
+        }
+
+
+        private string GetRequiredDependencies(string errorMessage)
+        {
+            try
+            {
+                List<MissingDependency> dependencies = new List<MissingDependency>();
+
+                string missingDependencyPattern = "<MissingDependency>(.*?)<\\/MissingDependency>";
+                string requiredPattern = "<Required(.*?)\\/>";
+                string dependantPattern = "<Dependent(.*?)\\/>";
+                MatchCollection missingMatches = Regex.Matches(errorMessage, missingDependencyPattern);
+                if (missingMatches.Count > 0)
+                {
+                    foreach (Match match in missingMatches)
+                    {
+                        var missContent = match.Groups[1];
+
+                        var requiredContent = GetContainOfRegex(missContent.Value, requiredPattern);
+
+                        var requiredDisplayName = GetHtmlAttribute(requiredContent, "displayName");
+                        var requiredTypeString = GetHtmlAttribute(requiredContent, "type");
+                        var requiredTypeInt = int.Parse(requiredTypeString);
+
+                        var dependantContent = GetContainOfRegex(missContent.Value, dependantPattern);
+                        var dependantDisplayName = GetHtmlAttribute(dependantContent, "displayName");
+                        var dependantTypeString = GetHtmlAttribute(dependantContent, "type");
+                        var dependantTypeInt = int.Parse(dependantTypeString);
+
+                        MissingDependency dependency = new MissingDependency()
+                        {
+                            DependantDisplayName = dependantDisplayName,
+                            DependantType = (SolutionComponentType)dependantTypeInt,
+                            RequiredDisplayName = requiredDisplayName,
+                            RequiredType = (SolutionComponentType)requiredTypeInt,
+                        };
+
+                        var already = dependencies
+                                .FirstOrDefault(k =>
+                                    k.RequiredDisplayName == dependency.RequiredDisplayName
+                                    && k.RequiredType == dependency.RequiredType
+                                    && k.DependantDisplayName == dependency.DependantDisplayName
+                                    && k.DependantType == dependency.DependantType);
+                        if (already == null)
+                        {
+                            dependencies.Add(dependency);
+                        }
+                    }
+                }
+
+                var data = new StringBuilder();
+                foreach (var dependency in dependencies)
+                {
+                    data.AppendLine("#### MISSING DEPENDENCY ####");
+                    data.AppendLine($"\tRequired component: {dependency.RequiredDisplayName} ({dependency.RequiredType.ToString()})");
+                    data.AppendLine($"\tDependent component: {dependency.DependantDisplayName} ({dependency.DependantType.ToString()})");
+                    data.AppendLine();
+                }
+
+                return data.ToString();
+
+            }
+            catch (Exception)
+            {
+
+                return null;
+            }
+
+        }
+
+
+        public static string GetHtmlAttribute(string text, string attributeName)
+        {
+            var right = text.Substring(text.IndexOf(attributeName) + attributeName.Length);
+            var withoutEquals = right.Substring(2);
+            return withoutEquals.Substring(0, withoutEquals.IndexOf("\"")).Replace("\"", "");
+        }
+
+        public static string GetContainOfRegex(string text, string pattern)
+        {
+            MatchCollection requiredMatchs = Regex.Matches(text, pattern);
+            if (requiredMatchs.Count > 0)
+            {
+                var requiredContent = requiredMatchs[0].Groups[1].Value;
+                return requiredContent;
+            }
+            return null;
         }
 
 
@@ -237,5 +334,5 @@ namespace SolutionManagerUI.ViewModels
 
     }
 
-    
+
 }

@@ -517,6 +517,7 @@
                                                         <MenuItem Header="Find why is not in"  Command="{Binding Source={StaticResource viewModel}, Path=FindReasonWhyComponentIsNotInCommand, Mode=OneWay}" />
                                                         <Separator></Separator>
                                                         <MenuItem Header="Find layers where component is"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
+                                                        <MenuItem Header="Component layers manager"  Command="{Binding Source={StaticResource viewModel}, Path=FindLayersWhereComponentIs, Mode=OneWay}" />
                                                     </ContextMenu>
                                                 </Grid.ContextMenu>
 

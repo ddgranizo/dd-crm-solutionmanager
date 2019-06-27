@@ -140,6 +140,7 @@
     <Compile Include="Models\BlobData.cs" />
     <Compile Include="Models\ComponentTypeData.cs" />
     <Compile Include="Models\CrmConnection.cs" />
+    <Compile Include="Models\MissingDependency.cs" />
     <Compile Include="Models\Setting.cs" />
     <Compile Include="Providers\CrmDataProvider.cs" />
     <Compile Include="Services\BlobStorageService.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="ViewModels\CheckWorkSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\DownloadBlobManagerViewModel.cs" />
     <Compile Include="ViewModels\CreateSolutionManagerViewModel.cs" />
+    <Compile Include="ViewModels\ComponentLayersManagerViewModel.cs" />
     <Compile Include="ViewModels\WorkSolutionManagerViewModel.cs" />
     <Compile Include="ViewModels\Base\BaseViewModel.cs" />
     <Compile Include="ViewModels\AggregatedSolutionManagerViewModel.cs" />
@@ -175,6 +177,9 @@
     </Compile>
     <Compile Include="Views\CreateSolutionManager.xaml.cs">
       <DependentUpon>CreateSolutionManager.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ComponentLayersManager.xaml.cs">
+      <DependentUpon>ComponentLayersManager.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\WorkSolutionManager.xaml.cs">
       <DependentUpon>WorkSolutionManager.xaml</DependentUpon>
@@ -223,6 +228,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\CreateSolutionManager.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\ComponentLayersManager.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

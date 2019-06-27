@@ -1283,6 +1283,43 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("CreateSolutionCommand", CreateSolutionCommand);
 
             Commands.Add("SetAllWorkSolutionsCommand", SetAllWorkSolutionsCommand);
+
+            Commands.Add("GetComponentLayersCommand", GetComponentLayersCommand);
+        }
+
+
+
+        private ICommand _getComponentLayersCommand = null;
+        public ICommand GetComponentLayersCommand
+        {
+            get
+            {
+                if (_getComponentLayersCommand == null)
+                {
+                    _getComponentLayersCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ComponentLayersManager man = new ComponentLayersManager(
+                                this.Service,
+                                this.CurrentCrmConnection,
+                                this.CurrentSolutionManager,
+                                this.Settings,
+                                this.SelectedSolutionComponent);
+                            man.ShowDialog();
+
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return CurrentSolutionManager != null && SelectedSolutionComponent != null;
+                    });
+                }
+                return _getComponentLayersCommand;
+            }
         }
 
 
