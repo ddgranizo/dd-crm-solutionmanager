@@ -44,6 +44,11 @@ namespace DD.Crm.SolutionManager
             return CrmProvider.GetPublishers(_service);
         }
 
+        public void UpdatedJustCreatedAggregatedSolution(Guid aggregatedId, string uniqueName, string displayName)
+        {
+            CrmProvider.UpdatedJustCreatedAggregatedSolution(_service, aggregatedId, uniqueName, displayName);
+        }
+
         public void SetStatusAggregatedSolution(Guid aggregatedId, AggregatedSolution.AggregatedSolutionStatus status)
         {
             CrmProvider.UpdateAggregatedSolutionStatus(_service, aggregatedId, status);

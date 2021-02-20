@@ -960,13 +960,12 @@ namespace SolutionManagerUI.ViewModels
 
 
         private Guid _exportingSolutionTaskId = Guid.NewGuid();
-        private void ExportSolution(Solution solution, bool managed)
+        private void ExportSolution(Solution solution, bool managed, bool other = false)
         {
             string defaultPath = GetDefaultZipPath();
             var path = FileDialogManager.SelectPath(defaultPath);
             path = StringFormatter.GetPathWithLastSlash(path);
-            var fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, managed);
-            var fullPath = string.Format("{0}{1}", path, fileName);
+            
             SetDialog($"Exporting solution managed={managed}...");
             ThreadManager.Instance.ScheduleTask(() =>
             {
@@ -974,11 +973,25 @@ namespace SolutionManagerUI.ViewModels
                 var errorMessage = string.Empty;
                 try
                 {
+                    var fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, managed);
+                    var fullPath = string.Format("{0}{1}", path, fileName);
                     CurrentSolutionManager.ExportSolution(solution.UniqueName, fullPath, managed);
                     if (BlobService.IsEnabledBlobStorage())
                     {
-                        SetDialog($"Uploading to BlobStorage '{solution.UniqueName}' managed={managed}...");
-                        BlobService.Upload(solution.UniqueName, fullPath);
+                        SetDialog($"Uploading to BlobStorage '{fileName}' managed={managed}...");
+                        BlobService.Upload(fileName, fullPath);
+                    }
+
+                    if (other)
+                    {
+                        fileName = StringFormatter.GetSolutionFileName(solution.UniqueName, solution.Version, !managed);
+                        fullPath = string.Format("{0}{1}", path, fileName);
+                        CurrentSolutionManager.ExportSolution(solution.UniqueName, fullPath, !managed);
+                        if (BlobService.IsEnabledBlobStorage())
+                        {
+                            SetDialog($"Uploading to BlobStorage '{fileName}' managed={!managed}...");
+                            BlobService.Upload(fileName, fullPath);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -1248,6 +1261,9 @@ namespace SolutionManagerUI.ViewModels
 
             Commands.Add("ExportManagedSolutionCommand", ExportManagedSolutionCommand);
             Commands.Add("ExportUnmanagedSolutionCommand", ExportUnmanagedSolutionCommand);
+            Commands.Add("ExportBothManagedAndUnmanagedSolutionCommand", ExportBothManagedAndUnmanagedSolutionCommand);
+
+            
             Commands.Add("ImportSolutionCommand", ImportSolutionFromFileCommand);
             Commands.Add("ImportSolutionFromBlobCommand", ImportSolutionFromBlobCommand);
             
@@ -1285,6 +1301,105 @@ namespace SolutionManagerUI.ViewModels
             Commands.Add("SetAllWorkSolutionsCommand", SetAllWorkSolutionsCommand);
 
             Commands.Add("GetComponentLayersCommand", GetComponentLayersCommand);
+
+
+
+            Commands.Add("ImportSettingsFromFileCommand", ImportSettingsFromFileCommand);
+            Commands.Add("ImportConnectionsFromFileCommand", ImportConnectionsFromFileCommand);
+            Commands.Add("OpenSettingsPathCommand", OpenSettingsPathCommand);
+        }
+
+
+        private ICommand _openSettingsPathCommand = null;
+        public ICommand OpenSettingsPathCommand
+        {
+            get
+            {
+                if (_openSettingsPathCommand == null)
+                {
+                    _openSettingsPathCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            AppDataManager.OpenSettingsPath();
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+                    });
+                }
+                return _openSettingsPathCommand;
+            }
+        }
+
+
+        private ICommand _importConnectionsFromFileCommand = null;
+        public ICommand ImportConnectionsFromFileCommand
+        {
+            get
+            {
+                if (_importConnectionsFromFileCommand == null)
+                {
+                    _importConnectionsFromFileCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var file = FileDialogManager.SelectFile();
+                            if (!string.IsNullOrEmpty(file))
+                            {
+                                AppDataManager.ImportConnectionsFromFile(file);
+                                Connections = AppDataManager.LoadConnections();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+
+                    });
+                }
+                return _importConnectionsFromFileCommand;
+            }
+
+        }
+
+        private ICommand _importSettingsFromFileCommand = null;
+        public ICommand ImportSettingsFromFileCommand
+        {
+            get
+            {
+                if (_importSettingsFromFileCommand == null)
+                {
+                    _importSettingsFromFileCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            var file = FileDialogManager.SelectFile();
+                            if (!string.IsNullOrEmpty(file))
+                            {
+                                AppDataManager.ImportSettingsFromFile(file);
+                                Settings = AppDataManager.LoadSettings();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return true;
+
+                    });
+                }
+                return _importSettingsFromFileCommand;
+            }
         }
 
 
@@ -2124,6 +2239,32 @@ namespace SolutionManagerUI.ViewModels
             return SettingsManager.GetSetting<string>(this.Settings, DefaultExportPathSettingKey, null);
         }
 
+        private ICommand _exportBothManagedAndUnmanagedSolutionCommand = null;
+        public ICommand ExportBothManagedAndUnmanagedSolutionCommand
+        {
+            get
+            {
+                if (_exportBothManagedAndUnmanagedSolutionCommand == null)
+                {
+                    _exportBothManagedAndUnmanagedSolutionCommand = new RelayCommand((object param) =>
+                    {
+                        try
+                        {
+                            ExportSolution(SelectedSolution, false, true);
+                        }
+                        catch (Exception ex)
+                        {
+                            RaiseError(ex.Message);
+                        }
+                    }, (param) =>
+                    {
+                        return SelectedSolution != null;
+                    });
+                }
+                return _exportBothManagedAndUnmanagedSolutionCommand;
+            }
+        }
+
         private ICommand _exportUnmanagedSolutionCommand = null;
         public ICommand ExportUnmanagedSolutionCommand
         {
@@ -2398,11 +2539,18 @@ namespace SolutionManagerUI.ViewModels
                                     SelectedAggregatedSolution);
                             mergeManager.ShowDialog();
 
+
                             if (IsSolutionMode)
                             {
                                 SolutionFilter = null;
                                 var solutionCreated = mergeManager.GetViewModel().MergedSolution;
                                 ReloadSolutions(solutionCreated.Id);
+                            }
+                            else
+                            {
+                                IsSolutionMode = false;
+                                IsAggregatedWorkSolutionMode = true;
+                                ReloadSolutions();
                             }
 
                         }

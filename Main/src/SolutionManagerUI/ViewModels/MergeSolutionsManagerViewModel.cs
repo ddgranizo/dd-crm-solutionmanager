@@ -372,6 +372,7 @@ namespace SolutionManagerUI.ViewModels
             {
                 IsAggregatedMode = true;
                 PrepareAggregatedSolution(settings, aggregatedSolution);
+                CurrentAggregatedSolution = aggregatedSolution;
             }
 
             RegisterCommands();
@@ -403,7 +404,7 @@ namespace SolutionManagerUI.ViewModels
             var uniqueName = StringFormatter.FormatString(aggregatedSolution.Name);
             this.NewDisplayName = string.Format("AGGR - {0} - {1}", aggregatedSolution.Type.ToString(), aggregatedSolution.Name);
             this.UniqueName = string.Format(aggregatedSolutionName, aggregatedSolution.Type.ToString(), uniqueName);
-            if (this.UniqueName.Length>50)
+            if (this.UniqueName.Length > 50)
             {
                 this.UniqueName = this.UniqueName.Substring(0, 50);
             }
@@ -522,16 +523,11 @@ namespace SolutionManagerUI.ViewModels
                     }, (param) =>
                     {
                         return
-                            IsAggregatedMode && (
-                                 !IsDialogOpen
-                                 && SolutionComponents.Count > 0
-                            )
-                            || (IsVisibleExistingSolutionSection
-                            && SelectedSolution != null)
+                            IsAggregatedMode && (!IsDialogOpen && SolutionComponents.Count > 0)
                             ||
-                            (IsVisibleCreateSolutionSection
-                            && !string.IsNullOrEmpty(NewDisplayName)
-                            && SelectedPublisher != null);
+                            (IsVisibleExistingSolutionSection && SelectedSolution != null)
+                            ||
+                            (IsVisibleCreateSolutionSection && !string.IsNullOrEmpty(NewDisplayName) && SelectedPublisher != null);
                     });
                 }
                 return _doMergeCommand;
@@ -555,6 +551,9 @@ namespace SolutionManagerUI.ViewModels
                 }
             }
             var solution = CurrentSolutionManager.CreateSolution(NewDisplayName, UniqueName, SelectedPublisher, description.ToString());
+
+            CurrentSolutionManager.UpdatedJustCreatedAggregatedSolution(CurrentAggregatedSolution.Id, UniqueName, NewDisplayName);
+
             targetSolution = solution;
             return targetSolution;
         }

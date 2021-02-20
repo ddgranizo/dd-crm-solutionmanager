@@ -65,10 +65,22 @@ namespace DD.Crm.SolutionManager.Utilities
                     .Select(k => new EntityReference(publisherEntityLogicalName, k.Id) { Name = k.GetAttributeValue<string>("friendlyname") })
                     .ToList();
         }
-        public static void UpdateAggregatedSolutionStatus(IOrganizationService service, Guid workSolutionid, AggregatedSolution.AggregatedSolutionStatus status)
+
+
+
+        public static void UpdatedJustCreatedAggregatedSolution(IOrganizationService service, Guid aggregatedId, string uniqueName, string displayName)
         {
             Entity e = new Entity(AggregatedSolution.EntityLogicalName);
-            e.Id = workSolutionid;
+            e.Id = aggregatedId;
+            e[AggregatedSolution.AttributeDefinitions.DisplayName] = displayName;
+            e[AggregatedSolution.AttributeDefinitions.UniqueName] = uniqueName;
+            service.Update(e);
+        }
+
+        public static void UpdateAggregatedSolutionStatus(IOrganizationService service, Guid aggregatedId, AggregatedSolution.AggregatedSolutionStatus status)
+        {
+            Entity e = new Entity(AggregatedSolution.EntityLogicalName);
+            e.Id = aggregatedId;
             e[AggregatedSolution.AttributeDefinitions.Status] = new OptionSetValue((int)status);
             service.Update(e);
         }

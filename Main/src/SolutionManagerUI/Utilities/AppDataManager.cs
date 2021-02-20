@@ -1,6 +1,7 @@
 ﻿using SolutionManagerUI.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,6 +20,74 @@ namespace SolutionManagerUI.Utilities
 
         private const string ConnectionsFileSetting = "Connections.xaml";
         private const string ConnectionsFileSettingBackup = "ConnectionsBackup.xaml";
+
+
+
+        public static void OpenSettingsPath()
+        {
+            if (!Directory.Exists(GetFolderPath()))
+            {
+                Directory.CreateDirectory(GetFolderPath());
+            }
+            Process.Start(GetFolderPath());
+        }
+
+        public static void ImportSettingsFromFile(string file)
+        {
+
+            if (!Directory.Exists(GetFolderPath()))
+            {
+                Directory.CreateDirectory(GetFolderPath());
+            }
+
+            try
+            {
+                var content = File.ReadAllText(file);
+                if (!string.IsNullOrEmpty(content))
+                {
+                    List<Setting> orgs = null;
+                    using (var stream = System.IO.File.OpenRead(file))
+                    {
+                        var serializer = new XmlSerializer(typeof(List<Setting>));
+                        orgs = serializer.Deserialize(stream) as List<Setting>;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            File.Copy(file, GetSettingsPath(), true);
+        }
+
+        public static void ImportConnectionsFromFile(string file)
+        {
+
+            if (!Directory.Exists(GetFolderPath()))
+            {
+                Directory.CreateDirectory(GetFolderPath());
+            }
+
+            try
+            {
+                var content = File.ReadAllText(file);
+                if (!string.IsNullOrEmpty(content))
+                {
+                    List<CrmConnection> orgs = null;
+                    using (var stream = System.IO.File.OpenRead(file))
+                    {
+                        var serializer = new XmlSerializer(typeof(List<CrmConnection>));
+                        orgs = serializer.Deserialize(stream) as List<CrmConnection>;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            File.Copy(file, GetConnectionsFilePath(), true);
+        }
 
 
         public static void CreateAppDataPathIfNotExists()
@@ -147,15 +216,15 @@ namespace SolutionManagerUI.Utilities
                         var serializer = new XmlSerializer(typeof(List<Setting>));
                         config = serializer.Deserialize(stream) as List<Setting>;
                     }
-                    return config.OrderBy(k=>k.Key).ToList();
+                    return config.OrderBy(k => k.Key).ToList();
                 }
             }
             return new List<Setting>();
 
         }
-        
 
-        
+
+
 
         private static string GetConnectionsBackupFilePath()
         {

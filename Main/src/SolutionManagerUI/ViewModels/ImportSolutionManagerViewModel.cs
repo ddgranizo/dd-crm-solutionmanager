@@ -176,7 +176,7 @@ namespace SolutionManagerUI.ViewModels
 
                             System.Windows.Clipboard.SetText(dependencies);
                             var newMessage = $"(Copied to clipboard)\r\n{dependencies}";
-                            MessageBox.Show(dependencies, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            MessageBox.Show(newMessage, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
                     else

@@ -41,6 +41,8 @@ namespace DD.Crm.SolutionManager.Models
             public const string Status = "statuscode";
             public const string State = "statecode";
             public const string IsMergedWithSupersolution = "alm_ismerged";
+            public const string UniqueName = "alm_solutionuniquename";
+            public const string DisplayName = "alm_solutiondisplayname";
         }
 
         public AggregatedSolutionStatus Status { get; set; }

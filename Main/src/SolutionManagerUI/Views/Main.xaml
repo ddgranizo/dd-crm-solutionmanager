@@ -66,6 +66,13 @@
                 <Menu DockPanel.Dock="Top" Background="White">
                     <MenuItem Header="Archivo">
                         <MenuItem Header="New" Command="{Binding Source={StaticResource viewModel}, Path=NewCommand, Mode=OneWay}" />
+                        <MenuItem Header="Open settings path" Command="{Binding Source={StaticResource viewModel}, Path=OpenSettingsPathCommand, Mode=OneWay}" />
+                        <Separator />
+                        <MenuItem Header="Import settings" >
+                            <MenuItem Header="Import settings from file"  Command="{Binding Source={StaticResource viewModel}, Path=ImportSettingsFromFileCommand, Mode=OneWay}" />
+                            <MenuItem Header="Import connections from file"  Command="{Binding Source={StaticResource viewModel}, Path=ImportConnectionsFromFileCommand, Mode=OneWay}" />
+                        </MenuItem>
+                       
                     </MenuItem>
                     <MenuItem Header="Settings">
                         <MenuItem Header="Manage connections"  Command="{Binding Source={StaticResource viewModel}, Path=OpenConnectionsCommand, Mode=OneWay}" />
@@ -291,6 +298,7 @@
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="auto"/>
+                                                    <ColumnDefinition Width="auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                 </Grid.ColumnDefinitions>
                                                 <TextBlock VerticalAlignment="Center" Grid.Column="0" Text="{Binding StringFormat=' {0} - ', RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ListViewItem}}, Converter={StaticResource IndexConverter}}"></TextBlock>
@@ -298,20 +306,20 @@
                                                 <Label Width="100" Grid.Column="1"  Padding="5" HorizontalAlignment="Center" Background="{Binding Status, Converter={StaticResource WorkSolutionStatusToBackgroundConverter}}" >
                                                     <TextBlock  HorizontalAlignment="Center" Text="{Binding StatusString}"></TextBlock>
                                                 </Label>
-                                                <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="2"></TextBlock>
+                                                <TextBlock Margin="5,5,0,5" Text="{Binding Jira, StringFormat='[{0}]'}" Grid.Column="2" ></TextBlock>
+                                                <TextBlock Margin="5" Text="{Binding Name}" Grid.Column="3"></TextBlock>
 
-
-                                                <Grid ToolTip="Dependencies OK" Margin="5" Grid.Column="3" Visibility="{Binding AreAllDependencies, Converter={StaticResource BoolToCollapseConverter}}">
+                                                <Grid ToolTip="Dependencies OK" Margin="5" Grid.Column="4" Visibility="{Binding AreAllDependencies, Converter={StaticResource BoolToCollapseConverter}}">
                                                     <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="LawnGreen"  Icon="Check" Height="16" Width="16" />
                                                 </Grid>
 
-                                                <Grid ToolTip="Dependencies KO" Margin="5" Grid.Column="3" Visibility="{Binding IsDependencyError, Converter={StaticResource BoolToCollapseConverter}}">
+                                                <Grid ToolTip="Dependencies KO" Margin="5" Grid.Column="5" Visibility="{Binding IsDependencyError, Converter={StaticResource BoolToCollapseConverter}}">
                                                     <fa:ImageAwesome VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Red" Icon="Bug" Height="16" Width="16" />
                                                 </Grid>
 
 
-                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
-                                                <TextBlock VerticalAlignment="Center"  Grid.Column="6" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
+                                                <fa:ImageAwesome Margin="5,0,0,0" Grid.Column="6" VerticalAlignment="Center" HorizontalAlignment="Center" Icon="User"  Height="14" Width="14" />
+                                                <TextBlock VerticalAlignment="Center"  Grid.Column="7" Margin="5,0,0,0" Text="{Binding CreatedBy.Name}" ></TextBlock>
 
 
                                                 <Grid.ContextMenu>
@@ -408,6 +416,7 @@
                                                         <MenuItem Header="Export">
                                                             <MenuItem Header="Export Managed" Command="{Binding Source={StaticResource viewModel}, Path=ExportManagedSolutionCommand, Mode=OneWay}" />
                                                             <MenuItem Header="Export Unmanaged" Command="{Binding Source={StaticResource viewModel}, Path=ExportUnmanagedSolutionCommand, Mode=OneWay}" />
+                                                            <MenuItem Header="Export Both" Command="{Binding Source={StaticResource viewModel}, Path=ExportBothManagedAndUnmanagedSolutionCommand, Mode=OneWay}" />
                                                         </MenuItem>
                                                         <Separator />
                                                         <MenuItem Header="Components which are only in this solution" Command="{Binding Source={StaticResource viewModel}, Path=CheckSolutionComponentsWichAreOnlyInSolutionCommand, Mode=OneWay}" />
@@ -443,7 +452,6 @@
                             </ScrollViewer>
                         </Grid>
                     </GroupBox>
-
                 </Grid>
 
 
